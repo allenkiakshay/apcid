@@ -230,6 +230,24 @@ export default function Home() {
     }
   };
 
+  const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    e.preventDefault(); // disable right-click
+  };
+
+  const handleCopy = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault(); // disable Ctrl+C
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault(); // disable Ctrl+V
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "v")) {
+      e.preventDefault();
+    }
+  };
+
   if (submitstatus) {
     return (
       <div>
@@ -369,6 +387,10 @@ export default function Home() {
                   handleTextChange(e);
                   setFormData((prev) => ({ ...prev, text: e.target.value }));
                 }}
+                onContextMenu={handleContextMenu}
+                onCopy={handleCopy}
+                onPaste={handlePaste}
+                onKeyDown={handleKeyDown}
                 placeholder="Start typing here..."
                 className="w-full h-40 resize-none border border-gray-300 rounded-lg p-4 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />

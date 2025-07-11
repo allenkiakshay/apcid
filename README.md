@@ -17,7 +17,7 @@ APCID is a project designed to [brief description of the project]. This README p
 
 3. Build the project:
     ```bash
-    make build
+    npm run build
     ```
 
 ## How to Run
@@ -25,12 +25,12 @@ APCID is a project designed to [brief description of the project]. This README p
 
 2. After building the project, you can run it using:
     ```bash
-    ./apcid
+    npm run dev
     ```
 
 3. Optional: Provide configuration or arguments if required:
     ```bash
-    ./apcid --config=config.yaml
+    npm run dev -- --config=config.yaml
     ```
 
 ## Environment Variables
@@ -40,7 +40,7 @@ Before running the project, ensure the following environment variables are set:
     ```bash
     openssl rand -base64 32
     ```
-- `NEXTAUTH_URL`: The base URL of the site (e.g., `http://localhost:3000`).
+- `NEXTAUTH_URL`: The base URL of the site (e.g., `http://localhost:3000` or `http://<your-ip-address>:3000` if running on an IP address).
 - `DATABASE_URL`: Replace with your actual database URL, e.g.,:
     ```
     postgresql://user:password@host:port/database
@@ -53,4 +53,3 @@ Before running the project, ensure the following environment variables are set:
 ## Additional Information
 - For detailed documentation, refer to the [docs](docs/).
 - If you encounter issues, please check the [issues](https://github.com/allenkiakshay/apcid/issues) page or contact the maintainers.
-

@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# APCID Project
 
-## Getting Started
+## Overview
+APCID is a project designed to [brief description of the project]. This README provides instructions on how to build and run the project.
 
-First, run the development server:
+## How to Build
+1. Ensure you have the required dependencies installed by running:
+    ```bash
+    npm install
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Clone the repository:
+    ```bash
+    git clone https://github.com/allenkiakshay/apcid.git
+    cd apcid
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Build the project:
+    ```bash
+    make build
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How to Run
+1. Before running the project, create a folder named `uploads` in the project directory. Inside the `uploads` folder, create another folder named `QPS`. Upload the required question papers into the `QPS` folder, as the project will pick the question papers from this location.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. After building the project, you can run it using:
+    ```bash
+    ./apcid
+    ```
 
-## Learn More
+3. Optional: Provide configuration or arguments if required:
+    ```bash
+    ./apcid --config=config.yaml
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+## Environment Variables
+Before running the project, ensure the following environment variables are set:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXTAUTH_SECRET`: Generate a secret using:
+    ```bash
+    openssl rand -base64 32
+    ```
+- `NEXTAUTH_URL`: The base URL of the site (e.g., `http://localhost:3000`).
+- `DATABASE_URL`: Replace with your actual database URL, e.g.,:
+    ```
+    postgresql://user:password@host:port/database
+    ```
+- `JWT_SECRET`: Generate a secret using:
+    ```bash
+    openssl rand -base64 32
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Additional Information
+- For detailed documentation, refer to the [docs](docs/).
+- If you encounter issues, please check the [issues](https://github.com/allenkiakshay/apcid/issues) page or contact the maintainers.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

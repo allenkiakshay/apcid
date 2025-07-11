@@ -1,6 +1,5 @@
 "use client";
 import Navbar from "@/components/Navbar";
-import { uploadFileToS3 } from "@/lib/ImageUpload";
 import { generateToken } from "@/lib/jwttoken";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -9,6 +8,7 @@ export default function Home() {
   const [text, setText] = useState("");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
+  const [questionPaper, setQuestionPaper] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [formdata, setFormData] = useState<{
     excelfile: File | null;
@@ -23,7 +23,7 @@ export default function Home() {
   });
   const [submitstatus, setSubmitStatus] = useState(false);
 
-  const { data: session,status } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (!session) return; // Ensure session is defined before calling fetchData
@@ -111,60 +111,28 @@ export default function Home() {
       {
         user: session?.user,
       },
-      60 // Token valid for 5 minutes
+      60
     );
 
     try {
-      const excelurl = await uploadFileToS3(
-        formdata.excelfile,
-        "main",
-        "excel",
-        `${session?.user.hallticket}.${formdata.excelfile.name.split(".")[1]}`
-      );
-
-      const wordurl = await uploadFileToS3(
-        formdata.wordfile,
-        "main",
-        "word",
-        `${session?.user.hallticket}.${formdata.wordfile.name.split(".")[1]}`
-      );
-      const ppturl = await uploadFileToS3(
-        formdata.pptfile,
-        "main",
-        "ppt",
-        `${session?.user.hallticket}.${formdata.pptfile.name.split(".")[1]}`
-      );
-
-      // Convert textarea text to a .txt file
       const textBlob = new Blob([formdata.text], { type: "text/plain" });
       const textFile = new File([textBlob], "typing-text.txt", {
         type: "text/plain",
       });
-      const texturl = await uploadFileToS3(
-        textFile,
-        "main",
-        "text",
-        `${session?.user.hallticket}.txt`
-      );
 
-      if (!excelurl || !wordurl || !ppturl || !texturl) {
-        setMessage("Failed to upload one or more files. Please try again.");
-        return;
-      }
+      const formData = new FormData();
+      formData.append("excelfile", formdata.excelfile!);
+      formData.append("wordfile", formdata.wordfile!);
+      formData.append("pptfile", formdata.pptfile!);
+      formData.append("textfile", textFile);
+      formData.append("typingspeed", typingSpeed?.toString() || "");
 
-      const response = await fetch("/api/submit", {
+      const response = await fetch("/api/localsubmit", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          excelurl,
-          wordurl,
-          ppturl,
-          texturl,
-          typingspeed: typingSpeed,
-        }),
+        body: formData,
       });
 
       const responseData = await response.json();
@@ -212,6 +180,56 @@ export default function Home() {
     }
   };
 
+  const fetchQuestionPaper = async () => {
+    try {
+      const response = await fetch("/api/fetch/qp", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(`Failed to fetch question paper: ${errorMessage}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setQuestionPaper(url); // Update the questionPaper state with the file URL
+    } catch (error) {
+      console.error("Error fetching question paper:", error);
+      setMessage("Failed to download question paper. Please try again.");
+    }
+  };
+
+  const fetchMergedPDF = async () => {
+    try {
+      const token = generateToken(
+        {
+          user: session?.user,
+        },
+        60 // Token valid for 1 minute
+      );
+
+      const response = await fetch("/api/fetch/merged", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(`Failed to fetch merged PDF: ${errorMessage}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Error fetching merged PDF:", error);
+      setMessage("Failed to download merged PDF. Please try again.");
+    }
+  };
+
   if (submitstatus) {
     return (
       <div>
@@ -221,10 +239,11 @@ export default function Home() {
             You have already submitted the files.
           </h1>
           <div className="flex flex-col items-center gap-4">
-            <button className="bg-blue-600 text-white py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-              <a href={`https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/apcid/mergedpdf/${session?.user.hallticket}.pdf`} target="_blank" rel="noopener noreferrer">
-                Download Response Sheet
-              </a>
+            <button
+              onClick={fetchMergedPDF}
+              className="bg-blue-600 text-white py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
+            >
+              Download Response Sheet
             </button>
             <button
               onClick={() => signOut()}
@@ -244,7 +263,9 @@ export default function Home() {
         <Navbar />
         <div className="flex items-center justify-center h-[80vh] bg-gray-100">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Loading...</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
+              Loading...
+            </h1>
             <p className="text-gray-600 text-lg">
               Please wait while we fetch your session details.
             </p>
@@ -274,12 +295,25 @@ export default function Home() {
         {/* Left part: PDF viewer */}
         <div className="flex-1 overflow-auto border-r border-gray-300">
           <div className="w-full h-full flex flex-col items-center justify-center">
-            <iframe
-              // src="https://mahesh-mens-touch.s3.ap-south-1.amazonaws.com/apcid/Question+Paper.pdf"
-              src="/uploads/Question Paper.pdf"
-              className="w-full h-full"
-              title="Question Paper"
-            ></iframe>
+            {questionPaper ? (
+              <iframe
+                src={questionPaper}
+                className="w-full h-full"
+                title="Question Paper"
+              ></iframe>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-600">
+                  Question paper is not available.
+                </p>
+                <button
+                  onClick={fetchQuestionPaper}
+                  className="mt-3 bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition-colors"
+                >
+                  Fetch Question Paper
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

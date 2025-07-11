@@ -299,6 +299,7 @@ export default function Home() {
               <iframe
                 src={questionPaper}
                 className="w-full h-full"
+                typeof="application/pdf"
                 title="Question Paper"
               ></iframe>
             ) : (

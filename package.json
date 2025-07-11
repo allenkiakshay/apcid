@@ -4,24 +4,50 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.844.0",
+    "@prisma/client": "^6.11.1",
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
+    "child_process": "^1.0.2",
+    "execa": "^9.6.0",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^11.3.0",
+    "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^8.5.1",
+    "jspdf": "^3.0.1",
+    "libreoffice-convert": "^1.6.1",
+    "next": "15.3.5",
+    "next-auth": "^4.24.11",
+    "node-fetch": "^3.3.2",
+    "pdf-lib": "^1.17.1",
+    "pdf-merger-js": "^5.1.2",
+    "prisma": "^6.11.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.5"
+    "tmp": "^0.2.3"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^5.0.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/js-cookie": "^3.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/tmp": "^0.2.6",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
-    "@eslint/eslintrc": "^3"
+    "i": "^0.3.7",
+    "npm": "^10.9.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

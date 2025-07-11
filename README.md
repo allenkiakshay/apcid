@@ -53,3 +53,28 @@ Before running the project, ensure the following environment variables are set:
 ## Additional Information
 - For detailed documentation, refer to the [docs](docs/).
 - If you encounter issues, please check the [issues](https://github.com/allenkiakshay/apcid/issues) page or contact the maintainers.
+
+
+## Folder Structure in `uploads`
+
+The `uploads` folder is structured as follows:
+
+```
+uploads/
+├── halticketno/
+│   ├── original/
+│   │   └── [all original files]
+│   ├── pdf/
+│   │   └── [all files converted to PDF with signature at the end]
+│   └── merged_hallticketno.pdf
+└── QPS/
+    └── [all question papers]
+```
+
+### Explanation:
+- **`halticketno/`**: Contains subfolders and files related to hall tickets.
+  - **`original/`**: Stores all original files.
+  - **`pdf/`**: Contains files converted to PDF format, with signatures appended at the end.
+  - **`merged_hallticketno.pdf`**: A single merged PDF file for the hall ticket number.
+
+- **`QPS/`**: Stores all question papers required for the project.

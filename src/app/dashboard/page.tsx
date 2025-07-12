@@ -205,6 +205,7 @@ const DashboardPage = () => {
                 <th className="border border-gray-300 p-2">Word File</th>
                 <th className="border border-gray-300 p-2">PPT File</th>
                 <th className="border border-gray-300 p-2">Textarea File</th>
+                <th className="border border-gray-300 p-2">Typing Speed</th>
                 <th className="border border-gray-300 p-2">Submitted Time</th>
               </tr>
             </thead>

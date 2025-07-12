@@ -82,10 +82,57 @@ export default function Home() {
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    fileType: string
+    fileKey: "excelfile" | "wordfile" | "pptfile"
   ) => {
-    const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, [fileType]: file }));
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
+    const allowedTypesMap: Record<
+      "excelfile" | "wordfile" | "pptfile",
+      { mime: string[]; extensions: string[] }
+    > = {
+      excelfile: {
+        mime: [
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ],
+        extensions: ["xls", "xlsx"],
+      },
+      wordfile: {
+        mime: [
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        extensions: ["doc", "docx"],
+      },
+      pptfile: {
+        mime: [
+          "application/vnd.ms-powerpoint",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ],
+        extensions: ["ppt", "pptx"],
+      },
+    };
+
+    const allowed = allowedTypesMap[fileKey];
+
+    if (
+      !allowed.mime.includes(file.type) ||
+      !allowed.extensions.includes(fileExtension || "")
+    ) {
+      setMessage(
+        `Please upload a valid ${fileKey
+          .replace("file", "")
+          .toUpperCase()} file.`
+      );
+      e.target.value = ""; // Clear invalid input
+      return;
+    }
+
+    // If valid, update your state
+    setFormData((prev) => ({ ...prev, [fileKey]: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { data: session } = useSession();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +29,12 @@ export default function LoginPage() {
       setError("Invalid email or password");
     }
   }
+
+  useEffect(() => {
+    if (session) {
+      router.push("/");
+    }
+  }, [router, session]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">

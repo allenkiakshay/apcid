@@ -182,15 +182,21 @@ export async function POST(req: Request) {
     }
 
     // Update user submission status
+    const istDate = new Date();
+    istDate.setMinutes(istDate.getMinutes() + 330); // Convert UTC to IST (UTC+5:30)
+
     await prisma.user.update({
       where: { email: user.email },
       data: {
-        isSubmitted: true,
-        typingspeed: Math.floor(parseFloat(typingSpeedValue as string)),
-        ppturl: pptpath,
-        wordurl: wordpath,
-        excelurl: excelpath,
-        texturl: textpath,
+      isSubmitted: true,
+      typingspeed: Math.floor(parseFloat(typingSpeedValue as string)),
+      ppturl: pptpdfpath,
+      wordurl: wordpdfpath,
+      excelurl: excelpdfpath,
+      texturl: textpdfpath,
+      submittedAt: istDate,
+      mergedurl: mergedPdfFilePath,
+      updatedAt: istDate,
       },
     });
 

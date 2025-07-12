@@ -125,6 +125,7 @@ const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.hallticket = user.hallticket;
+        token.role = user.role;
       }
       return token;
     },
@@ -134,6 +135,7 @@ const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.name = token.name;
         session.user.hallticket = token.hallticket;
+        session.user.role = token.role as "ADMIN" | "USER"; // Ensure role matches expected type
       }
       return session;
     },

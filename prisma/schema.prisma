@@ -28,6 +28,7 @@ model User {
   mergedurl   String?
   typingspeed Int?
   isSubmitted Boolean  @default(false)
+  submittedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

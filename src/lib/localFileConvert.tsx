@@ -24,9 +24,16 @@ export async function localConvertToPDFWithSignatures(
   }
 
   const command = `libreoffice --headless --convert-to pdf --outdir "${folderPath}" "${inputPath1}"`;
-  const { stderr } = await execAsync(command);
+  const { stdout, stderr } = await execAsync(command, {
+    env: {
+      ...process.env,
+      HOME: "/tmp", // Important: set a valid writable HOME
+      USER: "ubuntu", // or your VM username
+    },
+  });
+
   if (stderr) {
-    throw new Error(`Failed to convert file to PDF: ${stderr}`);
+    throw new Error(`LibreOffice error: ${stderr}`);
   }
 
   const fileName = path

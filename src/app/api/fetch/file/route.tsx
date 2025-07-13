@@ -11,8 +11,6 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const filePath = formData.get("filePath") as string;
 
-    console.log("Received file path:", filePath,formData);
-
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return { error: "Unauthorized", status: 401 };
     }
@@ -50,16 +48,47 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("Fetching file:", filePath);
-
-    if (!fs.existsSync(filePath)) {
+    const path = require("path");
+    const sanitizedFilePath = path.normalize(filePath);
+    if (!fs.existsSync(sanitizedFilePath)) {
       return new Response("File not found", { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(filePath);
+    const fileBuffer = fs.readFileSync(sanitizedFilePath);
     const headers = new Headers();
-    headers.set("Content-Type", "application/pdf");
-    headers.set("Content-Disposition", 'inline; filename="Question Paper.pdf"');
+
+    // Determine the content type based on the file extension
+    const fileExtension = path.extname(sanitizedFilePath).toLowerCase();
+    let contentType = "application/octet-stream"; // Default content type
+
+    switch (fileExtension) {
+      case ".pdf":
+        contentType = "application/pdf";
+        break;
+      case ".xlsx":
+        contentType =
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        break;
+      case ".ppt":
+        contentType = "application/vnd.ms-powerpoint";
+        break;
+      case ".doc":
+        contentType = "application/msword";
+        break;
+      case ".docx":
+        contentType =
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        break;
+      default:
+        contentType = "application/octet-stream";
+    }
+
+    headers.set("Content-Type", contentType);
+    headers.set(
+      "Content-Disposition",
+      `inline; filename="${path.basename(sanitizedFilePath)}"`
+    );
+
     return new Response(fileBuffer, {
       status: 200,
       headers: headers,

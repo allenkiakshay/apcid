@@ -98,21 +98,21 @@ export default function Home() {
           "application/vnd.ms-excel",
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ],
-        extensions: ["xls", "xlsx"],
+        extensions: ["xlsx"],
       },
       wordfile: {
         mime: [
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ],
-        extensions: ["doc", "docx"],
+        extensions: ["docx"],
       },
       pptfile: {
         mime: [
           "application/vnd.ms-powerpoint",
           "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         ],
-        extensions: ["ppt", "pptx"],
+        extensions: ["pptx"],
       },
     };
 
@@ -395,7 +395,7 @@ export default function Home() {
                 </label>
                 <input
                   type="file"
-                  accept=".xls,.xlsx"
+                  accept=".xlsx"
                   onChange={(e) => handleFileChange(e, "excelfile")}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                 />
@@ -406,7 +406,7 @@ export default function Home() {
                 </label>
                 <input
                   type="file"
-                  accept=".doc,.docx"
+                  accept=".docx"
                   onChange={(e) => handleFileChange(e, "wordfile")}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                 />
@@ -417,7 +417,7 @@ export default function Home() {
                 </label>
                 <input
                   type="file"
-                  accept=".ppt,.pptx"
+                  accept=".pptx"
                   onChange={(e) => handleFileChange(e, "pptfile")}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                 />

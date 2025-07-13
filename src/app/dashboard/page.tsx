@@ -92,7 +92,18 @@ const DashboardPage = () => {
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      const fileExtension = filePath.split(".").pop()?.toLowerCase();
+
+      if (fileExtension === "pdf") {
+        window.open(url, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filePath.split("/").pop() || "downloaded_file";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } catch (error) {
       console.error("Error fetching file:", error);
       alert("Failed to Fetch File. Please try again.");
@@ -129,8 +140,6 @@ const DashboardPage = () => {
         }
 
         const result = await response.json();
-
-        console.log("Fetched submitted users:", result.submittedUsers);
 
         setSubmittedUsers(result.submittedUsers.length);
         setSubmittedData(result.submittedUsers);
@@ -223,36 +232,100 @@ const DashboardPage = () => {
                     </button>
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <button
-                      onClick={() => fetchFile(data.excelurl)}
-                      className="bg-green-500 text-white px-2 py-1 rounded"
-                    >
-                      Excel File
-                    </button>
+                    {data.excelurl && (
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() =>
+                            fetchFile(
+                              data.excelurl
+                                .replace("/pdf", "/original")
+                                .replace(".pdf", ".xlsx")
+                            )
+                          }
+                          className="bg-green-500 text-white px-2 py-1 rounded"
+                        >
+                          Original
+                        </button>
+                        <button
+                          onClick={() => fetchFile(data.excelurl)}
+                          className="bg-yellow-500 text-white px-2 py-1 rounded"
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <button
-                      onClick={() => fetchFile(data.wordurl)}
-                      className="bg-purple-500 text-white px-2 py-1 rounded"
-                    >
-                      Word File
-                    </button>
+                    {data.wordurl && (
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() =>
+                            fetchFile(
+                              data.wordurl
+                                .replace("/pdf", "/original")
+                                .replace(".pdf", ".docx")
+                            )
+                          }
+                          className="bg-purple-500 text-white px-2 py-1 rounded"
+                        >
+                          Original
+                        </button>
+                        <button
+                          onClick={() => fetchFile(data.wordurl)}
+                          className="bg-pink-500 text-white px-2 py-1 rounded"
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <button
-                      onClick={() => fetchFile(data.ppturl)}
-                      className="bg-orange-500 text-white px-2 py-1 rounded"
-                    >
-                      PPT File
-                    </button>
+                    {data.ppturl && (
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() =>
+                            fetchFile(
+                              data.ppturl
+                                .replace("/pdf", "/original")
+                                .replace(".pdf", ".pptx")
+                            )
+                          }
+                          className="bg-orange-500 text-white px-2 py-1 rounded"
+                        >
+                          Original
+                        </button>
+                        <button
+                          onClick={() => fetchFile(data.ppturl)}
+                          className="bg-red-500 text-white px-2 py-1 rounded"
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="border border-gray-300 p-2">
-                    <button
-                      onClick={() => fetchFile(data.texturl)}
-                      className="bg-gray-500 text-white px-2 py-1 rounded"
-                    >
-                      Textarea File
-                    </button>
+                    {data.texturl && (
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() =>
+                            fetchFile(
+                              data.texturl
+                                .replace("/pdf", "/original")
+                                .replace(".pdf", ".txt")
+                            )
+                          }
+                          className="bg-gray-500 text-white px-2 py-1 rounded"
+                        >
+                          Original
+                        </button>
+                        <button
+                          onClick={() => fetchFile(data.texturl)}
+                          className="bg-gray-700 text-white px-2 py-1 rounded"
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="border border-gray-300 p-2">
                     {data.typingspeed}

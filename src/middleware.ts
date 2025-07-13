@@ -7,14 +7,18 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 🚫 Redirect unauthenticated users trying to access protected pages
-  if (pathname.startsWith("/") || pathname.startsWith("/dashboard")) {
+  if (
+    pathname.startsWith("/") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/dbdata")
+  ) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }
 
   // 🛡 RBAC Example — Restrict /update-payment to only ADMIN
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") && pathname.includes("/dbdata")) {
     if (token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
@@ -24,8 +28,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/dashboard"
-  ],
+  matcher: ["/", "/dashboard"],
 };

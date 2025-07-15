@@ -70,11 +70,11 @@ export async function POST(req: Request) {
         contentType =
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         break;
-      case ".ppt":
+      case ".pptx":
         contentType = "application/vnd.ms-powerpoint";
         break;
-      case ".doc":
-        contentType = "application/msword";
+      case ".txt":
+        contentType = "text/plain";
         break;
       case ".docx":
         contentType =

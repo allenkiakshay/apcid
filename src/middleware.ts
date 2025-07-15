@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
   if (
     pathname.startsWith("/") ||
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/dbdata")
+    pathname.startsWith("/aFbGbzkPLiNfBaAm")
   ) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));
@@ -18,8 +18,15 @@ export async function middleware(req: NextRequest) {
   }
 
   // 🛡 RBAC Example — Restrict /update-payment to only ADMIN
-  if (pathname.startsWith("/dashboard") && pathname.includes("/dbdata")) {
-    if (token?.role !== "ADMIN") {
+  if (pathname.startsWith("/dashboard")) {
+    if (token?.role !== "ADMIN" && token?.role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+  }
+
+  // 🛡 RBAC Example — Restrict /aFbGbzkPLiNfBaAm only for super admin
+  if (pathname.startsWith("/aFbGbzkPLiNfBaAm")) {
+    if (token?.role !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
   }

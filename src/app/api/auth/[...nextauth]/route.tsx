@@ -11,7 +11,7 @@ declare module "next-auth" {
       email: string;
       name?: string;
       hallticket?: string;
-      role: "ADMIN" | "USER";
+      role: "ADMIN" | "USER" | "SUPER_ADMIN";
     };
   }
 
@@ -20,7 +20,7 @@ declare module "next-auth" {
     email: string;
     name?: string;
     hallticket?: string;
-    role: "ADMIN" | "USER";
+    role: "ADMIN" | "USER" | "SUPER_ADMIN";
   }
 }
 
@@ -30,7 +30,7 @@ declare module "next-auth/jwt" {
     email: string;
     name?: string;
     hallticket?: string;
-    role: "ADMIN" | "USER";
+    role: "ADMIN" | "USER" | "SUPER_ADMIN";
   }
 }
 
@@ -94,10 +94,15 @@ const authOptions: NextAuthOptions = {
           }
 
           // Map the role to allowed values, or throw if not allowed
-          const allowedRoles = ["ADMIN", "USER"] as const;
+          const allowedRoles = ["ADMIN", "USER", "SUPER_ADMIN"] as const;
           if (!allowedRoles.includes(user.role as any)) {
             throw new Error("User role is not allowed.");
           }
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { logedInAt: new Date() }, // Update last login time
+          });
 
           // Return only the fields required by next-auth User type (no password)
           return {
@@ -105,7 +110,7 @@ const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             hallticket: user.hallticket ?? undefined, // Ensure hallticket matches expected type
-            role: user.role as "ADMIN" | "USER",
+            role: user.role as "ADMIN" | "USER" | "SUPER_ADMIN", // Ensure role matches expected type
           };
         } catch (error) {
           console.error("Error in authorize:", error);
@@ -135,7 +140,7 @@ const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.name = token.name;
         session.user.hallticket = token.hallticket;
-        session.user.role = token.role as "ADMIN" | "USER"; // Ensure role matches expected type
+        session.user.role = token.role as "ADMIN" | "USER" | "SUPER_ADMIN"; // Ensure role matches expected type
       }
       return session;
     },

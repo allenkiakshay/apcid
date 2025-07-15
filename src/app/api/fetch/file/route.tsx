@@ -42,7 +42,16 @@ export async function POST(req: Request) {
       select: { role: true },
     });
 
-    if (!fetched_user || fetched_user.role !== "ADMIN") {
+    if (!fetched_user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    
+
+    if (!fetched_user || fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized access. Admins only." },
         { status: 403 }

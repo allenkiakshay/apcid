@@ -229,9 +229,24 @@ export default function Home() {
 
   const fetchQuestionPaper = async () => {
     try {
+      const token = generateToken(
+        {
+          user: session?.user,
+        },
+        60 // Token valid for 1 minute
+      );
+
       const response = await fetch("/api/fetch/qp", {
         method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      if (response.status === 400) {
+        setMessage("Question paper not available for your exam slot.");
+        return;
+      }
 
       if (!response.ok) {
         const errorMessage = await response.text();

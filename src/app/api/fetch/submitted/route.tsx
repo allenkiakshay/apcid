@@ -39,7 +39,7 @@ export async function GET(req: Request) {
       select: { role: true },
     });
 
-    if (!fetched_user || fetched_user.role !== "ADMIN") {
+    if (!fetched_user || fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized access. Admins only." },
         { status: 403 }

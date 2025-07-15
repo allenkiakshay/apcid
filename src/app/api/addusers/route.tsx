@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       select: { role: true },
     });
 
-    if (!fetched_user || fetched_user.role !== "ADMIN") {
+    if (!fetched_user || fetched_user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized access. Admins only." },
         { status: 403 }
@@ -77,10 +77,9 @@ export async function POST(req: Request) {
     }
 
     const users = lines.map((line) => {
-      const [email, password, name, hallticket] = line
-        .split(",")
-        .map((field) => field.trim());
-      return { email, password, name, hallticket };
+      const [email, name, password, hallticket, examslot, exadate, examroom] =
+        line.split(",").map((field) => field.trim());
+      return { email, name, password, hallticket, examslot, exadate, examroom };
     });
 
     if (users.length === 0) {
@@ -119,6 +118,9 @@ export async function POST(req: Request) {
           password: hashedPassword,
           name: user.name,
           hallticket: user.hallticket,
+          examslot: user.examslot,
+          examdate: user.exadate,
+          examroom: user.examroom,
         },
       });
 

@@ -5,9 +5,9 @@ import { generateToken } from "@/lib/jwttoken";
 import { useSession } from "next-auth/react";
 
 const DashboardPage = () => {
-  const [submittedUsers, setSubmittedUsers] = useState(0);
   const [submittedData, setSubmittedData] = useState<
     {
+      id: string;
       name: string;
       email: string;
       submittedAt: string;
@@ -22,54 +22,16 @@ const DashboardPage = () => {
       ptexturl: string;
       typingspeed: string;
       hallticket: string;
+      isSubmitted: boolean;
+      role: string;
+      examdate: string;
+      examroom: string;
+      logedInAt: string;
+      examslot: string;
     }[]
   >([]);
-  const [file, setFile] = useState<File | null>(null);
+
   const { data: session } = useSession();
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    setFile(selectedFile || null);
-  };
-
-  const handleFileUpload = async () => {
-    if (!file) {
-      alert("Please select a file to upload.");
-      return;
-    }
-
-    if (!session?.user) {
-      alert("User session is not available. Please log in.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("userfile", file);
-
-    try {
-      const token = generateToken({ user: session.user }, 60);
-
-      const response = await fetch("/api/addusers", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error || "Failed to upload file."}`);
-        return;
-      }
-
-      const result = await response.json();
-      alert(result.message || "File uploaded successfully.");
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("An unexpected error occurred while uploading the file.");
-    }
-  };
 
   const fetchFile = async (filePath: string, hallticket: string) => {
     const formData = new FormData();
@@ -132,7 +94,7 @@ const DashboardPage = () => {
       try {
         const token = generateToken({ user: session.user }, 60);
 
-        const response = await fetch("/api/fetch/submitted", {
+        const response = await fetch("/api/fetch/users", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -147,7 +109,6 @@ const DashboardPage = () => {
 
         const result = await response.json();
 
-        setSubmittedUsers(result.submittedUsers.length);
         setSubmittedData(result.submittedUsers);
       } catch (error) {
         console.error("Error fetching submitted users:", error);
@@ -157,217 +118,208 @@ const DashboardPage = () => {
     fetchSubmittedUsers();
   }, [session]);
 
-  if (!session) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="bg-white shadow-md rounded-lg p-6 text-center">
-          <h2 className="text-2xl font-bold text-gray-700 mb-4">
-            Please Log In
-          </h2>
-          <p className="text-gray-600 mb-6">
-            You need to log in to access the dashboard.
-          </p>
-          <a
-            href="/login"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-          >
-            Go to Login
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  if (session.user.role !== "ADMIN") {
-    return (
-      <div>
-        <Navbar />
-        <div className="flex items-center justify-center h-screen bg-gray-100">
-          <div className="bg-white shadow-md rounded-lg p-6 text-center">
-            <h2 className="text-2xl font-bold text-red-500 mb-4">
-              Access Denied
-            </h2>
-            <p className="text-gray-700 mb-6">
-              You do not have permission to access this page.
-            </p>
-            <a
-              href="/login"
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-            >
-              Login as Admin
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       <Navbar />
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-        <div className="flex space-x-4 mb-8">
-          {/* Section 1: Upload CSV File */}
-          <section className="flex-1 bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
-              Upload CSV File
-            </h2>
-            <div className="flex items-center space-x-4">
-              <input
-                type="file"
-                accept=".csv"
-                className="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onChange={handleFileChange}
-                id="fileInput"
-              />
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                onClick={handleFileUpload}
-              >
-                Upload
-              </button>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              Sample CSV format: &nbsp;
-              <a
-                href="https://docs.google.com/spreadsheets/d/1r_R0L1PxA2Wol3Hmp0LMo7MbADo9f4bW8hV8J2kImhg/edit?usp=sharing"
-                target="_blank"
-                className="text-blue-600 hover:underline"
-              >
-                Click here to view
-              </a>
-            </div>
-          </section>
+        {/* Section 1: Exam Status Counts */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {/* Writing Exam Count */}
+          <div className="bg-yellow-100 p-4 rounded shadow">
+            <h2 className="text-lg font-semibold mb-2">Writing Exam</h2>
+            <p className="text-2xl font-bold">
+              {
+                submittedData.filter(
+                  (data) => data.logedInAt && !data.isSubmitted
+                ).length
+              }
+            </p>
+          </div>
 
-          {/* Section 2: Number of Submitted Users */}
-          <section className="flex-1 bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
-              Number of Submitted Users
-            </h2>
-            <div className="flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-4xl rounded-lg p-6">
-              {submittedUsers}
-            </div>
-          </section>
+          {/* Submitted Count */}
+          <div className="bg-green-100 p-4 rounded shadow">
+            <h2 className="text-lg font-semibold mb-2">Submitted</h2>
+            <p className="text-2xl font-bold">
+              {submittedData.filter((data) => data.isSubmitted).length}
+            </p>
+          </div>
+
+          {/* Not Started Count */}
+          <div className="bg-red-100 p-4 rounded shadow">
+            <h2 className="text-lg font-semibold mb-2">Not Started</h2>
+            <p className="text-2xl font-bold">
+              {
+                submittedData.filter(
+                  (data) => !data.logedInAt && !data.isSubmitted
+                ).length
+              }
+            </p>
+          </div>
         </div>
 
         {/* Section 3: Submitted Data */}
         <section>
           <h2 className="text-xl font-semibold mb-2">Submitted Data</h2>
-          <table className="table-auto border-collapse border border-gray-300 w-full">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 p-2">Name</th>
-                <th className="border border-gray-300 p-2">Email</th>
-                <th className="border border-gray-300 p-2">Merged File</th>
-                <th className="border border-gray-300 p-2">Excel File</th>
-                <th className="border border-gray-300 p-2">Word File</th>
-                <th className="border border-gray-300 p-2">PPT File</th>
-                <th className="border border-gray-300 p-2">Textarea File</th>
-                <th className="border border-gray-300 p-2">Typing Speed</th>
-                <th className="border border-gray-300 p-2">Submitted Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {submittedData.map((data, index) => (
-                <tr key={index}>
-                  <td className="border border-gray-300 p-2">{data.name}</td>
-                  <td className="border border-gray-300 p-2">{data.email}</td>
-                  <td className="border border-gray-300 p-2">
-                    <button
-                      onClick={() => fetchFile(data.mergedurl, data.hallticket)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
-                    >
-                      Merged File
-                    </button>
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() =>
-                          fetchFile(data.oexcelurl, data.hallticket)
-                        }
-                        className="bg-green-500 text-white px-2 py-1 rounded"
-                      >
-                        Original
-                      </button>
-                      <button
-                        onClick={() =>
-                          fetchFile(data.pexcelurl, data.hallticket)
-                        }
-                        className="bg-yellow-500 text-white px-2 py-1 rounded"
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() =>
-                          fetchFile(data.owordurl, data.hallticket)
-                        }
-                        className="bg-purple-500 text-white px-2 py-1 rounded"
-                      >
-                        Original
-                      </button>
-                      <button
-                        onClick={() =>
-                          fetchFile(data.pwordurl, data.hallticket)
-                        }
-                        className="bg-pink-500 text-white px-2 py-1 rounded"
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() => fetchFile(data.oppturl, data.hallticket)}
-                        className="bg-orange-500 text-white px-2 py-1 rounded"
-                      >
-                        Original
-                      </button>
-                      <button
-                        onClick={() => fetchFile(data.pppturl, data.hallticket)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() =>
-                          fetchFile(data.otexturl, data.hallticket)
-                        }
-                        className="bg-gray-500 text-white px-2 py-1 rounded"
-                      >
-                        Original
-                      </button>
-                      <button
-                        onClick={() =>
-                          fetchFile(data.ptexturl, data.hallticket)
-                        }
-                        className="bg-gray-700 text-white px-2 py-1 rounded"
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    {data.typingspeed}
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    {data.submittedAt}
-                  </td>
+          <div className="overflow-auto">
+            <table className="table-auto border-collapse border border-gray-300 w-full">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 p-2">Name</th>
+                  <th className="border border-gray-300 p-2">Hall Ticket No</th>
+
+                  <th className="border border-gray-300 p-2">Role</th>
+                  <th className="border border-gray-300 p-2">Email</th>
+                  <th className="border border-gray-300 p-2">Exam Date</th>
+                  <th className="border border-gray-300 p-2">Exam Room</th>
+                  <th className="border border-gray-300 p-2">Exam Slot</th>
+                  <th className="border border-gray-300 p-2">Exam Status</th>
+                  <th className="border border-gray-300 p-2">Submitted Time</th>
+                  <th className="border border-gray-300 p-2">Merged File</th>
+                  <th className="border border-gray-300 p-2">Excel File</th>
+                  <th className="border border-gray-300 p-2">Word File</th>
+                  <th className="border border-gray-300 p-2">PPT File</th>
+                  <th className="border border-gray-300 p-2">Textarea File</th>
+                  <th className="border border-gray-300 p-2">Typing Speed</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {submittedData.map((data, index) => (
+                  <tr key={index}>
+                    <td className="border border-gray-300 p-2">{data.name}</td>
+                    <td className="border border-gray-300 p-2">
+                      {data.hallticket}
+                    </td>
+                    <td className="border border-gray-300 p-2">{data.role}</td>
+                    <td className="border border-gray-300 p-2">{data.email}</td>
+                    <td className="border border-gray-300 p-2">
+                      {data.examdate}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.examroom}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.examslot}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.isSubmitted
+                        ? "Submitted"
+                        : data.logedInAt
+                        ? "Writing Exam"
+                        : "Not Started"}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.submittedAt}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.mergedurl && (
+                        <button
+                          onClick={() =>
+                            fetchFile(data.mergedurl, data.hallticket)
+                          }
+                          className="bg-blue-500 text-white px-2 py-1 rounded"
+                        >
+                          Merged File
+                        </button>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.oexcelurl && (
+                        <div className="flex flex-col space-y-2">
+                          <button
+                            onClick={() =>
+                              fetchFile(data.oexcelurl, data.hallticket)
+                            }
+                            className="bg-green-500 text-white px-2 py-1 rounded"
+                          >
+                            Original
+                          </button>
+                          <button
+                            onClick={() =>
+                              fetchFile(data.pexcelurl, data.hallticket)
+                            }
+                            className="bg-yellow-500 text-white px-2 py-1 rounded"
+                          >
+                            PDF
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.owordurl && (
+                        <div className="flex flex-col space-y-2">
+                          <button
+                            onClick={() =>
+                              fetchFile(data.owordurl, data.hallticket)
+                            }
+                            className="bg-purple-500 text-white px-2 py-1 rounded"
+                          >
+                            Original
+                          </button>
+                          <button
+                            onClick={() =>
+                              fetchFile(data.pwordurl, data.hallticket)
+                            }
+                            className="bg-pink-500 text-white px-2 py-1 rounded"
+                          >
+                            PDF
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.oppturl && (
+                        <div className="flex flex-col space-y-2">
+                          <button
+                            onClick={() =>
+                              fetchFile(data.oppturl, data.hallticket)
+                            }
+                            className="bg-orange-500 text-white px-2 py-1 rounded"
+                          >
+                            Original
+                          </button>
+                          <button
+                            onClick={() =>
+                              fetchFile(data.pppturl, data.hallticket)
+                            }
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                          >
+                            PDF
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.otexturl && (
+                        <div className="flex flex-col space-y-2">
+                          <button
+                            onClick={() =>
+                              fetchFile(data.otexturl, data.hallticket)
+                            }
+                            className="bg-gray-500 text-white px-2 py-1 rounded"
+                          >
+                            Original
+                          </button>
+                          <button
+                            onClick={() =>
+                              fetchFile(data.ptexturl, data.hallticket)
+                            }
+                            className="bg-gray-700 text-white px-2 py-1 rounded"
+                          >
+                            PDF
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {data.typingspeed}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </div>

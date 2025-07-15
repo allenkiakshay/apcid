@@ -23,6 +23,10 @@ model User {
   hallticket  String    @unique
   isSubmitted Boolean   @default(false)
   submittedAt DateTime?
+  logedInAt   DateTime?
+  examslot    String
+  examdate    String
+  examroom    String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -30,6 +34,7 @@ model User {
 enum Role {
   USER
   ADMIN
+  SUPER_ADMIN
 }
 
 model Submission {
@@ -45,4 +50,12 @@ model Submission {
   pppturl     String
   ptexturl    String
   typingspeed Int
+}
+
+
+model QuestionPaper {
+  id          String   @id @default(cuid())
+  fileUrl     String
+  examslot    String
+  examdate    String
 }

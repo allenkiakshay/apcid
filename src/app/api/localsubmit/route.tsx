@@ -233,6 +233,81 @@ export async function POST(req: Request) {
     const yOffset = 50; // Distance from the bottom
     const xOffset = 50; // Distance from the left
 
+    // wite context in the page from starting from 50px from left and 50px from bottom
+    // Add a page heading
+    const headingYOffset = newPage.getHeight() - 150; // Position below the logos
+    newPage.drawText("Submission Report", {
+      x: xOffset,
+      y: headingYOffset,
+      size: 28,
+      color: rgb(0, 0, 0),
+    });
+
+    // Add word file details
+    const wordFileName = path.basename(wordfile.name);
+    const wordFileHash = path.basename(wordFileData).split(".")[0];
+
+    newPage.drawText(`Word File: ${wordFileName}`, {
+      x: xOffset,
+      y: headingYOffset - 40,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+    newPage.drawText(`Word File Hash: ${wordFileHash}`, {
+      x: xOffset,
+      y: headingYOffset - 70,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+
+    // Add excel file details
+    const excelFileName = path.basename(excelfile.name);
+    const excelFileHash = path.basename(excelFileData).split(".")[0];
+    newPage.drawText(`Excel File: ${excelFileName}`, {
+      x: xOffset,
+      y: headingYOffset - 100,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+    newPage.drawText(`Excel File Hash: ${excelFileHash}`, {
+      x: xOffset,
+      y: headingYOffset - 130,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+
+    // Add PPT file details
+    const pptFileName = path.basename(pptfile.name);
+    const pptFileHash = path.basename(pptFileData).split(".")[0];
+    newPage.drawText(`PPT File: ${pptFileName}`, {
+      x: xOffset,
+      y: headingYOffset - 160,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+    newPage.drawText(`PPT File Hash: ${pptFileHash}`, {
+      x: xOffset,
+      y: headingYOffset - 190,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+
+    // Add text file details
+    const textFileName = path.basename(textfile.name);
+    const textFileHash = path.basename(textFileData).split(".")[0];
+    newPage.drawText(`Text File: ${textFileName}`, {
+      x: xOffset,
+      y: headingYOffset - 220,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+    newPage.drawText(`Text File Hash: ${textFileHash}`, {
+      x: xOffset,
+      y: headingYOffset - 250,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+
     // Draw the provided signature
     const signatureWidth = 150; // Fixed width
     const signatureHeight = 50; // Fixed height

@@ -162,7 +162,9 @@ export default function Home() {
     );
 
     try {
-      const textBlob = new Blob([formdata.text], { type: "text/plain" });
+      const textBlob = new Blob(["\n\n\n\n\n\n" + formdata.text], {
+        type: "text/plain",
+      });
       const textFile = new File([textBlob], "typing-text.txt", {
         type: "text/plain",
       });

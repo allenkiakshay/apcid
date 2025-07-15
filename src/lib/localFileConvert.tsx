@@ -135,17 +135,6 @@ export async function localConvertToPDFWithSignatures(
         color: rgb(0, 0, 0),
       });
     });
-
-    // Add the input file name at the bottom of the page
-    const fileNameYOffset = 12; // Position near the bottom
-    const fileNameFontSize = 12;
-    const fileNameText = `Source File: ${path.basename(inputPath1)}`;
-    page.drawText(fileNameText, {
-      x: xOffset,
-      y: fileNameYOffset,
-      size: fileNameFontSize,
-      color: rgb(0, 0, 0),
-    });
   }
 
   const modifiedPdfBytes = await pdfDoc.save();

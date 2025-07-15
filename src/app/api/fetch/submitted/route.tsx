@@ -46,21 +46,42 @@ export async function GET(req: Request) {
       );
     }
 
-    const submittedUsers = await prisma.user.findMany({
+    const enrichedSubmittedUsers = await prisma.user.findMany({
       where: { isSubmitted: true },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        submittedAt: true,
-        excelurl: true,
-        wordurl: true,
-        ppturl: true,
-        texturl: true,
-        typingspeed: true,
-        mergedurl: true,
+      id: true,
+      name: true,
+      email: true,
+      submittedAt: true,
       },
     });
+
+    const submissionData = await prisma.submission.findMany({
+      where: {
+      userId: {
+        in: enrichedSubmittedUsers.map((user) => user.id),
+      },
+      },
+      select: {
+      userId: true,
+      excelurl: true,
+      wordurl: true,
+      ppturl: true,
+      texturl: true,
+      mergedurl: true,
+      typingspeed: true,
+      },
+    });
+
+    const submissionMap = submissionData.reduce((acc, submission) => {
+      acc[submission.userId] = submission;
+      return acc;
+    }, {} as Record<string, typeof submissionData[0]>);
+
+    const submittedUsers = enrichedSubmittedUsers.map((user) => ({
+      ...user,
+      ...submissionMap[user.id],
+    }));
 
     return NextResponse.json(
       { message: "Fetched successfully.", submittedUsers },

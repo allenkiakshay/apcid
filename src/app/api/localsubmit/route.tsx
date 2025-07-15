@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import { PrismaClient } from "@/generated/prisma";
 import { localConvertToPDFWithSignatures } from "@/lib/localFileConvert";
+import { createHash } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -14,15 +15,8 @@ async function validateRequest(req: Request) {
   const pptfile = formData.get("pptfile") as File;
   const textfile = formData.get("textfile") as File;
   const typingSpeedValue = formData.get("typingspeed");
-  
 
-  if (
-    !excelfile ||
-    !wordfile ||
-    !pptfile ||
-    !textfile ||
-    !typingSpeedValue
-  ) {
+  if (!excelfile || !wordfile || !pptfile || !textfile || !typingSpeedValue) {
     return {
       error: "Missing required fields or invalid typingSpeed",
       status: 400,
@@ -59,17 +53,33 @@ async function validateRequest(req: Request) {
   return { excelfile, wordfile, pptfile, textfile, typingSpeedValue, user };
 }
 
-async function saveFile(folderPath: string, file: File) {
-  const filePath = path.join(folderPath, file.name);
+export async function saveFile(folderPath: string, file: File) {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
+  // 🔒 Step 1: Create a SHA-256 hash of the file content
+  const hash = createHash("sha256").update(fileBuffer).digest("hex");
+
+  // Optional: Use hash in filename
+  const ext = path.extname(file.name);
+  const hashedFileName = `${hash}${ext}`;
+
+  const filePath = path.join(folderPath, hashedFileName);
+
+  // 🔧 Step 2: Ensure folder exists
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 
+  // 💾 Step 3: Save file to disk
   fs.writeFileSync(filePath, fileBuffer);
 
-  return filePath;
+  // 🧾 Step 4: Return file path and hash
+  return {
+    filePath,
+    hash,
+    originalName: file.name,
+    storedName: hashedFileName,
+  };
 }
 
 export async function POST(req: Request) {
@@ -121,26 +131,26 @@ export async function POST(req: Request) {
       fetched_user.hallticket
     );
 
-    const excelpath = await saveFile(originalfolderPath, excelfile);
-    const wordpath = await saveFile(originalfolderPath, wordfile);
-    const pptpath = await saveFile(originalfolderPath, pptfile);
-    const textpath = await saveFile(originalfolderPath, textfile);
+    const excelFileData = await saveFile(originalfolderPath, excelfile);
+    const wordFileData = await saveFile(originalfolderPath, wordfile);
+    const pptFileData = await saveFile(originalfolderPath, pptfile);
+    const textFileData = await saveFile(originalfolderPath, textfile);
 
     const excelpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      excelpath
+      excelFileData.filePath
     );
     const wordpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      wordpath
+      wordFileData.filePath
     );
     const pptpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      pptpath
+      pptFileData.filePath
     );
     const textpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      textpath
+      textFileData.filePath
     );
 
     // Merge all PDFs into one
@@ -165,10 +175,10 @@ export async function POST(req: Request) {
     // Verify all the files were saved correctly
 
     if (
-      !fs.existsSync(excelpath) ||
-      !fs.existsSync(wordpath) ||
-      !fs.existsSync(pptpath) ||
-      !fs.existsSync(textpath) ||
+      !fs.existsSync(excelFileData.filePath) ||
+      !fs.existsSync(wordFileData.filePath) ||
+      !fs.existsSync(pptFileData.filePath) ||
+      !fs.existsSync(textFileData.filePath) ||
       !fs.existsSync(excelpdfpath) ||
       !fs.existsSync(wordpdfpath) ||
       !fs.existsSync(pptpdfpath) ||
@@ -185,18 +195,23 @@ export async function POST(req: Request) {
     const istDate = new Date();
     istDate.setMinutes(istDate.getMinutes() + 330); // Convert UTC to IST (UTC+5:30)
 
-    await prisma.user.update({
-      where: { email: user.email },
+    const upload = await prisma.submission.create({
       data: {
-      isSubmitted: true,
-      typingspeed: Math.floor(parseFloat(typingSpeedValue as string)),
-      ppturl: pptpdfpath,
-      wordurl: wordpdfpath,
-      excelurl: excelpdfpath,
-      texturl: textpdfpath,
-      submittedAt: istDate,
-      mergedurl: mergedPdfFilePath,
-      updatedAt: istDate,
+        userId: fetched_user.id,
+        excelurl: excelpdfpath,
+        ppturl: pptpdfpath,
+        wordurl: wordpdfpath,
+        texturl: textpdfpath,
+        mergedurl: mergedPdfFilePath,
+        typingspeed: parseInt(typingSpeedValue as string, 10),
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: upload.userId },
+      data: {
+        isSubmitted: true,
+        submittedAt: istDate,
       },
     });
 

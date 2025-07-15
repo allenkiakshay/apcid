@@ -15,25 +15,30 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
+  id          String    @id @default(cuid())
+  email       String    @unique
   name        String
   password    String
-  role        Role     @default(USER)
-  hallticket  String   @unique
+  role        Role      @default(USER)
+  hallticket  String    @unique
+  isSubmitted Boolean   @default(false)
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Submission {
+  id          String  @id @default(cuid())
+  userId      String  @unique
   excelurl    String?
   wordurl     String?
   ppturl      String?
   texturl     String?
   mergedurl   String?
   typingspeed Int?
-  isSubmitted Boolean  @default(false)
-  submittedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-enum Role {
-  USER
-  ADMIN
 }

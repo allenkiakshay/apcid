@@ -171,7 +171,7 @@ export async function POST(req: Request) {
     );
 
     // Merge all PDFs into one
-    const { PDFDocument } = await import("pdf-lib");
+    const { PDFDocument, rgb } = await import("pdf-lib");
     const mergedPdf = await PDFDocument.create();
     const pdfFiles = [excelpdfpath, wordpdfpath, pptpdfpath, textpdfpath];
     for (const pdfFile of pdfFiles) {
@@ -183,6 +183,91 @@ export async function POST(req: Request) {
       );
       copiedPages.forEach((page) => mergedPdf.addPage(page));
     }
+
+    // Add a new empty page with custom content
+    const newPage = mergedPdf.addPage();
+
+    const leftLogoPath = path.join(process.cwd(), "public", "ap_police.png");
+    const rightLogoPath = path.join(process.cwd(), "public", "ap.png");
+
+    if (!fs.existsSync(leftLogoPath)) {
+      throw new Error(`Left logo file not found: ${leftLogoPath}`);
+    }
+
+    if (!fs.existsSync(rightLogoPath)) {
+      throw new Error(`Right logo file not found: ${rightLogoPath}`);
+    }
+
+    const leftLogoBytes = fs.readFileSync(leftLogoPath);
+    const rightLogoBytes = fs.readFileSync(rightLogoPath);
+
+    const leftLogoImage = await mergedPdf.embedPng(leftLogoBytes);
+    const rightLogoImage = await mergedPdf.embedPng(rightLogoBytes);
+
+    const leftLogoWidth = 50; // Fixed width for left logo
+    const leftLogoHeight = 50; // Fixed height for left logo
+    const rightLogoWidth = 50; // Fixed width for right logo
+    const rightLogoHeight = 50; // Fixed height for right logo
+
+    const leftLogoXOffset = 50; // Distance from the left
+    const leftLogoYOffset = newPage.getHeight() - leftLogoHeight - 20; // Distance from the top
+
+    const rightLogoXOffset = newPage.getWidth() - rightLogoWidth - 50; // Distance from the right
+    const rightLogoYOffset = newPage.getHeight() - rightLogoHeight - 20; // Distance from the top
+
+    // Draw the left logo
+    newPage.drawImage(leftLogoImage, {
+      x: leftLogoXOffset,
+      y: leftLogoYOffset,
+      width: leftLogoWidth,
+      height: leftLogoHeight,
+    });
+
+    // Draw the right logo
+    newPage.drawImage(rightLogoImage, {
+      x: rightLogoXOffset,
+      y: rightLogoYOffset,
+      width: rightLogoWidth,
+      height: rightLogoHeight,
+    });
+    const yOffset = 50; // Distance from the bottom
+    const xOffset = 50; // Distance from the left
+
+    // Draw the provided signature
+    const signatureWidth = 150; // Fixed width
+    const signatureHeight = 50; // Fixed height
+    const signatureImageBytes = fs.readFileSync(
+      path.join(process.cwd(), "public", "sign.png")
+    ); // Replace with actual path
+    const signatureImage = await mergedPdf.embedPng(signatureImageBytes);
+    newPage.drawImage(signatureImage, {
+      x: xOffset,
+      y: yOffset,
+      width: signatureWidth,
+      height: signatureHeight,
+    });
+
+    // Add names and designations side by side below the signature on the page
+    const fontSize = 18;
+    const textYOffset = yOffset - 20; // Position below the signature
+    const spacing = 200; // Horizontal spacing between name-designation pairs
+
+    const entries = [
+      { name: "DGP" },
+      { name: "Invigilator" },
+      { name: "Candidate" },
+    ];
+
+    entries.forEach((entry, index) => {
+      const xPosition = xOffset + index * spacing;
+      newPage.drawText(entry.name, {
+        x: xPosition,
+        y: textYOffset,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+      });
+    });
+
     const mergedPdfBytes = await mergedPdf.save();
     const mergedPdfFileName = `merged_${fetched_user.hallticket}.pdf`;
     const mergedPdfFilePath = path.join(mergedPdfPath, mergedPdfFileName);

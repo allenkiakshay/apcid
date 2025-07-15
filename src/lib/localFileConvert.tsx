@@ -2,12 +2,14 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 const execAsync = promisify(exec);
 
 export async function localConvertToPDFWithSignatures(
   folderPath: string,
-  inputPath1: string
+  inputPath1: string,
+  hallticketNo: string
 ): Promise<string> {
   const signaturePath = path.join(process.cwd(), "public", "sign.png");
 
@@ -53,46 +55,67 @@ export async function localConvertToPDFWithSignatures(
   const signatureImage = await pdfDoc.embedPng(signatureBytes);
 
   const pageCount = pdfDoc.getPageCount();
-  for (let i = 0; i < pageCount; i++) {
-    const page = pdfDoc.getPage(i);
+for (let i = 0; i < pageCount; i++) {
+  const page = pdfDoc.getPage(i);
 
-    const yOffset = 50; // Distance from the bottom
-    const xOffset = 50; // Distance from the left
+  const yOffset = 50; // Distance from the bottom
+  const xOffset = 50; // Distance from the left
 
-    // Draw the provided signature
-    const signatureWidth = 150; // Fixed width
-    const signatureHeight = 50; // Fixed height
-    page.drawImage(signatureImage, {
-      x: xOffset,
-      y: yOffset,
-      width: signatureWidth,
-      height: signatureHeight,
+  // Draw the provided signature
+  const signatureWidth = 150; // Fixed width
+  const signatureHeight = 50; // Fixed height
+  page.drawImage(signatureImage, {
+    x: xOffset,
+    y: yOffset,
+    width: signatureWidth,
+    height: signatureHeight,
+  });
+
+  // Add names and designations side by side below the signature on every page
+  const fontSize = 18;
+  const textYOffset = yOffset - 20; // Position below the signature
+  const spacing = 200; // Horizontal spacing between name-designation pairs
+
+  const entries = [
+    { name: "DGP" },
+    { name: "Invigilator" },
+    { name: "Candidate" },
+  ];
+
+  entries.forEach((entry, index) => {
+    const xPosition = xOffset + index * spacing;
+    page.drawText(entry.name, {
+      x: xPosition,
+      y: textYOffset,
+      size: fontSize,
+      color: rgb(0, 0, 0),
     });
+  });
 
-    // Add names and designations side by side below the signature on every page
-    const fontSize = 18;
-    const textYOffset = yOffset - 20; // Position below the signature
-    const spacing = 200; // Horizontal spacing between name-designation pairs
+  // Add the input file name at the bottom of the page
+  const fileNameYOffset = 20; // Position near the bottom
+  const fileNameFontSize = 12;
+  const fileNameText = `Source File: ${path.basename(inputPath1)}`;
+  page.drawText(fileNameText, {
+    x: xOffset,
+    y: fileNameYOffset,
+    size: fileNameFontSize,
+    color: rgb(0, 0, 0),
+  });
+}
 
-    const entries = [
-      { name: "DGP" },
-      { name: "Invigilator" },
-      { name: "Candidate" },
-    ];
-
-    entries.forEach((entry, index) => {
-      const xPosition = xOffset + index * spacing;
-      page.drawText(entry.name, {
-        x: xPosition,
-        y: textYOffset,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-      });
-    });
-  }
 
   const modifiedPdfBytes = await pdfDoc.save();
-  fs.writeFileSync(pdfPath, modifiedPdfBytes);
 
-  return pdfPath;
+  // Generate a hash of the modified PDF content
+  const hash = crypto.createHash("sha256").update(modifiedPdfBytes).update(hallticketNo).digest("hex");
+  const hashedFileName = `${hash}.pdf`;
+  const hashedPdfPath = path.join(folderPath, hashedFileName);
+
+  fs.writeFileSync(hashedPdfPath, modifiedPdfBytes);
+
+  // Remove the original file
+  fs.unlinkSync(pdfPath);
+
+  return hashedPdfPath;
 }

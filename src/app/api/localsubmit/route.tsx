@@ -53,33 +53,30 @@ async function validateRequest(req: Request) {
   return { excelfile, wordfile, pptfile, textfile, typingSpeedValue, user };
 }
 
-export async function saveFile(folderPath: string, file: File) {
+export async function saveFile(
+  folderPath: string,
+  file: File,
+  hallticketNo: string
+) {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  // 🔒 Step 1: Create a SHA-256 hash of the file content
-  const hash = createHash("sha256").update(fileBuffer).digest("hex");
+  const hash = createHash("sha256")
+    .update(fileBuffer)
+    .update(hallticketNo)
+    .digest("hex");
 
-  // Optional: Use hash in filename
   const ext = path.extname(file.name);
   const hashedFileName = `${hash}${ext}`;
 
   const filePath = path.join(folderPath, hashedFileName);
 
-  // 🔧 Step 2: Ensure folder exists
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 
-  // 💾 Step 3: Save file to disk
   fs.writeFileSync(filePath, fileBuffer);
 
-  // 🧾 Step 4: Return file path and hash
-  return {
-    filePath,
-    hash,
-    originalName: file.name,
-    storedName: hashedFileName,
-  };
+  return filePath;
 }
 
 export async function POST(req: Request) {
@@ -131,26 +128,46 @@ export async function POST(req: Request) {
       fetched_user.hallticket
     );
 
-    const excelFileData = await saveFile(originalfolderPath, excelfile);
-    const wordFileData = await saveFile(originalfolderPath, wordfile);
-    const pptFileData = await saveFile(originalfolderPath, pptfile);
-    const textFileData = await saveFile(originalfolderPath, textfile);
+    const excelFileData = await saveFile(
+      originalfolderPath,
+      excelfile,
+      fetched_user.hallticket
+    );
+    const wordFileData = await saveFile(
+      originalfolderPath,
+      wordfile,
+      fetched_user.hallticket
+    );
+    const pptFileData = await saveFile(
+      originalfolderPath,
+      pptfile,
+      fetched_user.hallticket
+    );
+    const textFileData = await saveFile(
+      originalfolderPath,
+      textfile,
+      fetched_user.hallticket
+    );
 
     const excelpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      excelFileData.filePath
+      excelFileData,
+      fetched_user.hallticket
     );
     const wordpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      wordFileData.filePath
+      wordFileData,
+      fetched_user.hallticket
     );
     const pptpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      pptFileData.filePath
+      pptFileData,
+      fetched_user.hallticket
     );
     const textpdfpath = await localConvertToPDFWithSignatures(
       pdfFolderPath,
-      textFileData.filePath
+      textFileData,
+      fetched_user.hallticket
     );
 
     // Merge all PDFs into one
@@ -175,10 +192,10 @@ export async function POST(req: Request) {
     // Verify all the files were saved correctly
 
     if (
-      !fs.existsSync(excelFileData.filePath) ||
-      !fs.existsSync(wordFileData.filePath) ||
-      !fs.existsSync(pptFileData.filePath) ||
-      !fs.existsSync(textFileData.filePath) ||
+      !fs.existsSync(excelFileData) ||
+      !fs.existsSync(wordFileData) ||
+      !fs.existsSync(pptFileData) ||
+      !fs.existsSync(textFileData) ||
       !fs.existsSync(excelpdfpath) ||
       !fs.existsSync(wordpdfpath) ||
       !fs.existsSync(pptpdfpath) ||
@@ -198,10 +215,14 @@ export async function POST(req: Request) {
     const upload = await prisma.submission.create({
       data: {
         userId: fetched_user.id,
-        excelurl: excelpdfpath,
-        ppturl: pptpdfpath,
-        wordurl: wordpdfpath,
-        texturl: textpdfpath,
+        oexcelurl: excelFileData,
+        oppturl: pptFileData,
+        owordurl: wordFileData,
+        otexturl: textFileData,
+        pexcelurl: excelpdfpath,
+        pppturl: pptpdfpath,
+        pwordurl: wordpdfpath,
+        ptexturl: textpdfpath,
         mergedurl: mergedPdfFilePath,
         typingspeed: parseInt(typingSpeedValue as string, 10),
       },

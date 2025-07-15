@@ -10,6 +10,7 @@ export async function POST(req: Request) {
     const authHeader = req.headers.get("Authorization");
     const formData = await req.formData();
     const filePath = formData.get("filePath") as string;
+    const hallticket = formData.get("hallticket") as string;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return { error: "Unauthorized", status: 401 };
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
     headers.set("Content-Type", contentType);
     headers.set(
       "Content-Disposition",
-      `inline; filename="${path.basename(sanitizedFilePath)}"`
+      `inline; filename="${hallticket}_${fileExtension}"`
     );
 
     return new Response(fileBuffer, {

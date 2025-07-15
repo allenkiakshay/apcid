@@ -33,12 +33,16 @@ enum Role {
 }
 
 model Submission {
-  id          String  @id @default(cuid())
-  userId      String  @unique
-  excelurl    String?
-  wordurl     String?
-  ppturl      String?
-  texturl     String?
-  mergedurl   String?
-  typingspeed Int?
+  id          String @id @default(cuid())
+  userId      String @unique
+  oexcelurl   String
+  owordurl    String
+  oppturl     String
+  otexturl    String
+  mergedurl   String
+  pexcelurl   String
+  pwordurl    String
+  pppturl     String
+  ptexturl    String
+  typingspeed Int
 }

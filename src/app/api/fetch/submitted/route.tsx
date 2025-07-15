@@ -49,34 +49,39 @@ export async function GET(req: Request) {
     const enrichedSubmittedUsers = await prisma.user.findMany({
       where: { isSubmitted: true },
       select: {
-      id: true,
-      name: true,
-      email: true,
-      submittedAt: true,
+        id: true,
+        name: true,
+        email: true,
+        hallticket: true,
+        submittedAt: true,
       },
     });
 
     const submissionData = await prisma.submission.findMany({
       where: {
-      userId: {
-        in: enrichedSubmittedUsers.map((user) => user.id),
-      },
+        userId: {
+          in: enrichedSubmittedUsers.map((user) => user.id),
+        },
       },
       select: {
-      userId: true,
-      excelurl: true,
-      wordurl: true,
-      ppturl: true,
-      texturl: true,
-      mergedurl: true,
-      typingspeed: true,
+        userId: true,
+        oexcelurl: true,
+        owordurl: true,
+        oppturl: true,
+        otexturl: true,
+        pexcelurl: true,
+        pwordurl: true,
+        pppturl: true,
+        ptexturl: true,
+        mergedurl: true,
+        typingspeed: true,
       },
     });
 
     const submissionMap = submissionData.reduce((acc, submission) => {
       acc[submission.userId] = submission;
       return acc;
-    }, {} as Record<string, typeof submissionData[0]>);
+    }, {} as Record<string, (typeof submissionData)[0]>);
 
     const submittedUsers = enrichedSubmittedUsers.map((user) => ({
       ...user,

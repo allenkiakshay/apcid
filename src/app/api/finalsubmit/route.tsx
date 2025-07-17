@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import { PrismaClient } from "@/generated/prisma";
 import { localConvertToPDFWithSignatures } from "@/lib/localFileConvert";
-import { createHash } from "crypto";
+import { createCipheriv, createDecipheriv, createHash } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -297,7 +297,18 @@ export async function GET(req: Request) {
     const mergedPdfFileName = `merged_${fetched_user.hallticket}.pdf`;
     const mergedPdfFilePath = path.join(mergedPdfPath, mergedPdfFileName);
 
-    fs.writeFileSync(mergedPdfFilePath, mergedPdfBytes);
+    // Encrypt the PDF bytes using provided encryption parameters
+    const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY || "", "hex");
+    const encryptionIv = Buffer.from(process.env.ENCRYPTION_IV || "", "hex");
+    const encryptionAlgorithm = process.env.ENCRYPTION_ALGORITHM || "aes-256-cbc";
+
+    const cipher = createCipheriv(encryptionAlgorithm, encryptionKey, encryptionIv);
+    const encryptedPdfBytes = Buffer.concat([
+      cipher.update(mergedPdfBytes),
+      cipher.final(),
+    ]);
+
+    fs.writeFileSync(mergedPdfFilePath, encryptedPdfBytes);
 
     // Verify all the files were saved correctly
 
@@ -342,7 +353,13 @@ export async function GET(req: Request) {
       return new Response("File not found", { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(mergedPdfFilePath);
+    const encryptedFileBuffer = fs.readFileSync(mergedPdfFilePath);
+
+    const decipher = createDecipheriv(encryptionAlgorithm, encryptionKey, encryptionIv);
+    const fileBuffer = Buffer.concat([
+      decipher.update(encryptedFileBuffer),
+      decipher.final(),
+    ]);
 
     return new Response(fileBuffer, {
       status: 200,

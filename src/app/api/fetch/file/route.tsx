@@ -3,6 +3,7 @@ import fs from "fs";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
+import { createDecipheriv } from "crypto";
 
 export async function POST(req: Request) {
   const prisma = new PrismaClient();
@@ -43,15 +44,13 @@ export async function POST(req: Request) {
     });
 
     if (!fetched_user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    
-
-    if (!fetched_user || fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN") {
+    if (
+      !fetched_user ||
+      (fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json(
         { error: "Unauthorized access. Admins only." },
         { status: 403 }
@@ -59,12 +58,21 @@ export async function POST(req: Request) {
     }
 
     const path = require("path");
+    const crypto = require("crypto");
     const sanitizedFilePath = path.normalize(filePath);
     if (!fs.existsSync(sanitizedFilePath)) {
       return new Response("File not found", { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(sanitizedFilePath);
+    let fileBuffer = fs.readFileSync(sanitizedFilePath);
+
+    const decipher = createDecipheriv(
+      process.env.ENCRYPTION_ALGORITHM || "aes-256-cbc",
+      Buffer.from(process.env.ENCRYPTION_KEY || "", "hex"),
+      Buffer.from(process.env.ENCRYPTION_IV || "", "hex")
+    );
+    fileBuffer = Buffer.concat([decipher.update(fileBuffer), decipher.final()]);
+
     const headers = new Headers();
 
     // Determine the content type based on the file extension

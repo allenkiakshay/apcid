@@ -371,7 +371,7 @@ const DashboardPage = () => {
                 <strong>Submitted:</strong> {counts.submitted}
               </div>
               <div className="text-gray-600 mb-2">
-                <strong>Logged In:</strong> {counts.notlogedin}
+                <strong>Not Logged In:</strong> {counts.notlogedin}
               </div>
               <div className="text-gray-600">
                 <strong>Writing Exam:</strong> {counts.writingExam}

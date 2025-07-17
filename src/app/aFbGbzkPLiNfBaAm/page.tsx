@@ -31,7 +31,7 @@ const DashboardPage = () => {
       string,
       {
         submitted: number;
-        loggedIn: number;
+        notlogedin: number;
         writingExam: number;
         entries: typeof submittedData;
       }
@@ -141,7 +141,7 @@ const DashboardPage = () => {
 
         interface RoomData {
           submitted: number;
-          loggedIn: number;
+          notlogedin: number;
           writingExam: number;
           entries: User[];
         }
@@ -153,14 +153,14 @@ const DashboardPage = () => {
               if (!acc[room]) {
                 acc[room] = {
                   submitted: 0,
-                  loggedIn: 0,
+                  notlogedin: 0,
                   writingExam: 0,
                   entries: [],
                 };
               }
               acc[room].submitted += user.isSubmitted ? 1 : 0;
-              acc[room].loggedIn += user.logedInAt ? 1 : 0;
-              acc[room].writingExam += user.isSubmitted ? 0 : 1;
+              acc[room].notlogedin += user.logedInAt ? 0 : 1;
+              acc[room].writingExam += user.logedInAt && !user.isSubmitted ? 1 : 0;
               acc[room].entries.push(user);
               return acc;
             },
@@ -288,6 +288,13 @@ const DashboardPage = () => {
                 Upload Users
               </button>
             </div>
+            <a
+              className="text-blue-600 hover:underline mt-4 block"
+              href="https://docs.google.com/spreadsheets/d/1r_R0L1PxA2Wol3Hmp0LMo7MbADo9f4bW8hV8J2kImhg/edit?usp=sharing"
+              target="_blank"
+            >
+              View Sample CSV
+            </a>
           </section>
 
           {/* Upload Question Papers */}
@@ -364,7 +371,7 @@ const DashboardPage = () => {
                 <strong>Submitted:</strong> {counts.submitted}
               </div>
               <div className="text-gray-600 mb-2">
-                <strong>Logged In:</strong> {counts.loggedIn}
+                <strong>Logged In:</strong> {counts.notlogedin}
               </div>
               <div className="text-gray-600">
                 <strong>Writing Exam:</strong> {counts.writingExam}

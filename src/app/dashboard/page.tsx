@@ -10,24 +10,11 @@ const DashboardPage = () => {
       id: string;
       name: string;
       email: string;
-      submittedAt: string;
-      mergedurl: string;
-      oexcelurl: string;
-      owordurl: string;
-      oppturl: string;
-      otexturl: string;
-      pexcelurl: string;
-      pwordurl: string;
-      pppturl: string;
-      ptexturl: string;
-      typingspeed: string;
+      mergedPdfUrl: string;
       hallticket: string;
       isSubmitted: boolean;
-      role: string;
-      examdate: string;
-      examroom: string;
       logedInAt: string;
-      examslot: string;
+      examroom: string;
     }[]
   >([]);
 
@@ -109,6 +96,11 @@ const DashboardPage = () => {
 
         const result = await response.json();
 
+        if (!result.submittedUsers || !Array.isArray(result.submittedUsers)) {
+          console.error("Invalid response format:", result);
+          return;
+        }
+
         setSubmittedData(result.submittedUsers);
       } catch (error) {
         console.error("Error fetching submitted users:", error);
@@ -168,20 +160,9 @@ const DashboardPage = () => {
                 <tr>
                   <th className="border border-gray-300 p-2">Name</th>
                   <th className="border border-gray-300 p-2">Hall Ticket No</th>
-
-                  <th className="border border-gray-300 p-2">Role</th>
                   <th className="border border-gray-300 p-2">Email</th>
-                  <th className="border border-gray-300 p-2">Exam Date</th>
-                  <th className="border border-gray-300 p-2">Exam Room</th>
-                  <th className="border border-gray-300 p-2">Exam Slot</th>
-                  <th className="border border-gray-300 p-2">Exam Status</th>
-                  <th className="border border-gray-300 p-2">Submitted Time</th>
+                  <th className="border border-gray-300 p-2">Status</th>
                   <th className="border border-gray-300 p-2">Merged File</th>
-                  <th className="border border-gray-300 p-2">Excel File</th>
-                  <th className="border border-gray-300 p-2">Word File</th>
-                  <th className="border border-gray-300 p-2">PPT File</th>
-                  <th className="border border-gray-300 p-2">Textarea File</th>
-                  <th className="border border-gray-300 p-2">Typing Speed</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,17 +172,7 @@ const DashboardPage = () => {
                     <td className="border border-gray-300 p-2">
                       {data.hallticket}
                     </td>
-                    <td className="border border-gray-300 p-2">{data.role}</td>
                     <td className="border border-gray-300 p-2">{data.email}</td>
-                    <td className="border border-gray-300 p-2">
-                      {data.examdate}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.examroom}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.examslot}
-                    </td>
                     <td className="border border-gray-300 p-2">
                       {data.isSubmitted
                         ? "Submitted"
@@ -210,110 +181,16 @@ const DashboardPage = () => {
                         : "Not Started"}
                     </td>
                     <td className="border border-gray-300 p-2">
-                      {data.submittedAt}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.mergedurl && (
+                      {data.mergedPdfUrl && (
                         <button
                           onClick={() =>
-                            fetchFile(data.mergedurl, data.hallticket)
+                            fetchFile(data.mergedPdfUrl, data.hallticket)
                           }
                           className="bg-blue-500 text-white px-2 py-1 rounded"
                         >
-                          Merged File
+                          Download Response
                         </button>
                       )}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.oexcelurl && (
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() =>
-                              fetchFile(data.oexcelurl, data.hallticket)
-                            }
-                            className="bg-green-500 text-white px-2 py-1 rounded"
-                          >
-                            Original
-                          </button>
-                          <button
-                            onClick={() =>
-                              fetchFile(data.pexcelurl, data.hallticket)
-                            }
-                            className="bg-yellow-500 text-white px-2 py-1 rounded"
-                          >
-                            PDF
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.owordurl && (
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() =>
-                              fetchFile(data.owordurl, data.hallticket)
-                            }
-                            className="bg-purple-500 text-white px-2 py-1 rounded"
-                          >
-                            Original
-                          </button>
-                          <button
-                            onClick={() =>
-                              fetchFile(data.pwordurl, data.hallticket)
-                            }
-                            className="bg-pink-500 text-white px-2 py-1 rounded"
-                          >
-                            PDF
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.oppturl && (
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() =>
-                              fetchFile(data.oppturl, data.hallticket)
-                            }
-                            className="bg-orange-500 text-white px-2 py-1 rounded"
-                          >
-                            Original
-                          </button>
-                          <button
-                            onClick={() =>
-                              fetchFile(data.pppturl, data.hallticket)
-                            }
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                          >
-                            PDF
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.otexturl && (
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() =>
-                              fetchFile(data.otexturl, data.hallticket)
-                            }
-                            className="bg-gray-500 text-white px-2 py-1 rounded"
-                          >
-                            Original
-                          </button>
-                          <button
-                            onClick={() =>
-                              fetchFile(data.ptexturl, data.hallticket)
-                            }
-                            className="bg-gray-700 text-white px-2 py-1 rounded"
-                          >
-                            PDF
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {data.typingspeed}
                     </td>
                   </tr>
                 ))}

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import fs from "fs";
 import path from "path";
+import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   const prisma = new PrismaClient();
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
     const userfile = body.get("questionpaper") as File;
     const examslot = body.get("examslot") as string;
     const examdate = body.get("examdate") as string;
+    const otp = body.get("otp") as string;
     const authHeader = req.headers.get("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -66,6 +68,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!otp || otp.length !== 6) {
+      return NextResponse.json(
+        { error: "Invalid OTP. It must be 6 digits/Characters." },
+        { status: 400 }
+      );
+    }
+
     if (!userfile.name.endsWith(".pdf")) {
       return NextResponse.json(
         { error: "Only PDF files are allowed." },
@@ -95,6 +104,8 @@ export async function POST(req: Request) {
 
     fileStream.end();
 
+    const hashedOtp = bcrypt.hashSync(otp, 10);
+
     const prevqp = await prisma.questionPaper.findFirst({
       where: {
         examslot,
@@ -105,7 +116,10 @@ export async function POST(req: Request) {
     if (prevqp) {
       await prisma.questionPaper.update({
         where: { id: prevqp.id },
-        data: { fileUrl: filePath },
+        data: {
+          fileUrl: filePath,
+          ...(otp ? { otp: hashedOtp } : {}),
+        },
       });
 
       return NextResponse.json(
@@ -119,6 +133,7 @@ export async function POST(req: Request) {
         fileUrl: filePath,
         examslot,
         examdate,
+        otp: hashedOtp,
       },
     });
 

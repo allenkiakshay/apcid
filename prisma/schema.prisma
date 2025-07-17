@@ -29,6 +29,12 @@ model User {
   examroom    String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  submissions Submission[]
+  excelFiles  excelFile[]
+  wordFiles   wordFile[]
+  pptFiles    pptFile[]
+  textFiles   textFile[]
 }
 
 enum Role {
@@ -38,24 +44,64 @@ enum Role {
 }
 
 model Submission {
-  id          String @id @default(cuid())
-  userId      String @unique
-  oexcelurl   String
-  owordurl    String
-  oppturl     String
-  otexturl    String
-  mergedurl   String
-  pexcelurl   String
-  pwordurl    String
-  pppturl     String
-  ptexturl    String
-  typingspeed Int
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  mergedPdfUrl   String?
+  textSubmitted  Boolean  @default(false)
+  filesSubmitted Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }
 
+model excelFile {
+  id        String   @id @default(cuid())
+  userId    String
+  oexcelurl String
+  pexcelurl String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model wordFile {
+  id        String   @id @default(cuid())
+  userId    String
+  owordurl  String
+  pwordurl  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model pptFile {
+  id        String   @id @default(cuid())
+  userId    String
+  oppturl   String
+  pppturl   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model textFile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  otexturl    String
+  ptexturl    String
+  typingspeed Int
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
 
 model QuestionPaper {
-  id          String   @id @default(cuid())
-  fileUrl     String
-  examslot    String
-  examdate    String
+  id       String @id @default(cuid())
+  fileUrl  String
+  examslot String
+  examdate String
+  otp      String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

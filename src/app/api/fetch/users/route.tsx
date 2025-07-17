@@ -49,73 +49,18 @@ export async function GET(req: Request) {
       );
     }
 
-    if (fetched_user.role === "ADMIN") {
-      const enrichedSubmittedUsers = await prisma.user.findMany({
-        where: { role: "USER", examroom: fetched_user.examroom },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          hallticket: true,
-          submittedAt: true,
-          role: true,
-          logedInAt: true,
-          examslot: true,
-          isSubmitted: true,
-          examdate: true,
-          examroom: true,
-        },
-      });
-
-      const submissionData = await prisma.submission.findMany({
-        where: {
-          userId: {
-            in: enrichedSubmittedUsers.map((user) => user.id),
-          },
-        },
-        select: {
-          userId: true,
-          oexcelurl: true,
-          owordurl: true,
-          oppturl: true,
-          otexturl: true,
-          pexcelurl: true,
-          pwordurl: true,
-          pppturl: true,
-          ptexturl: true,
-          mergedurl: true,
-          typingspeed: true,
-        },
-      });
-
-      const submissionMap = submissionData.reduce((acc, submission) => {
-        acc[submission.userId] = submission;
-        return acc;
-      }, {} as Record<string, (typeof submissionData)[0]>);
-
-      const submittedUsers = enrichedSubmittedUsers.map((user) => ({
-        ...user,
-        ...submissionMap[user.id],
-      }));
-
-      return NextResponse.json(
-        { message: "Fetched successfully.", submittedUsers },
-        { status: 200 }
-      );
-    }
-
     const enrichedSubmittedUsers = await prisma.user.findMany({
+      where:
+        fetched_user.role === "ADMIN"
+          ? { role: "USER", examroom: fetched_user.examroom }
+          : undefined,
       select: {
         id: true,
         name: true,
         email: true,
         hallticket: true,
-        submittedAt: true,
-        role: true,
-        logedInAt: true,
-        examslot: true,
         isSubmitted: true,
-        examdate: true,
+        logedInAt: true,
         examroom: true,
       },
     });
@@ -128,27 +73,24 @@ export async function GET(req: Request) {
       },
       select: {
         userId: true,
-        oexcelurl: true,
-        owordurl: true,
-        oppturl: true,
-        otexturl: true,
-        pexcelurl: true,
-        pwordurl: true,
-        pppturl: true,
-        ptexturl: true,
-        mergedurl: true,
-        typingspeed: true,
+        mergedPdfUrl: true,
       },
     });
 
     const submissionMap = submissionData.reduce((acc, submission) => {
-      acc[submission.userId] = submission;
+      acc[submission.userId] = submission.mergedPdfUrl || "";
       return acc;
-    }, {} as Record<string, (typeof submissionData)[0]>);
+    }, {} as Record<string, string>);
 
     const submittedUsers = enrichedSubmittedUsers.map((user) => ({
-      ...user,
-      ...submissionMap[user.id],
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      hallticket: user.hallticket,
+      isSubmitted: user.isSubmitted,
+      logedInAt: user.logedInAt,
+      examroom: user.examroom,
+      mergedPdfUrl: submissionMap[user.id] || null,
     }));
 
     return NextResponse.json(

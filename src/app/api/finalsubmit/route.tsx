@@ -8,51 +8,6 @@ import { createHash } from "crypto";
 
 const prisma = new PrismaClient();
 
-async function validateRequest(req: Request) {
-  const formData = await req.formData();
-  const excelfile = formData.get("excelfile") as File;
-  const wordfile = formData.get("wordfile") as File;
-  const pptfile = formData.get("pptfile") as File;
-  const textfile = formData.get("textfile") as File;
-  const typingSpeedValue = formData.get("typingspeed");
-
-  if (!excelfile || !wordfile || !pptfile || !textfile || !typingSpeedValue) {
-    return {
-      error: "Missing required fields or invalid typingSpeed",
-      status: 400,
-    };
-  }
-
-  const authHeader = req.headers.get("Authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { error: "Unauthorized", status: 401 };
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  if (!token) {
-    return { error: "Token is required", status: 401 };
-  }
-
-  const tokenData = extractDataFromToken(token);
-
-  if (!tokenData) {
-    return { error: "Invalid token", status: 401 };
-  }
-
-  const user =
-    typeof tokenData === "object" && "user" in tokenData
-      ? tokenData.user
-      : null;
-
-  if (!user) {
-    return { error: "User not found", status: 404 };
-  }
-
-  return { excelfile, wordfile, pptfile, textfile, typingSpeedValue, user };
-}
-
 export async function saveFile(
   folderPath: string,
   file: File,
@@ -79,19 +34,31 @@ export async function saveFile(
   return filePath;
 }
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
-    const validationResult = await validateRequest(req);
+    const authHeader = req.headers.get("Authorization");
 
-    if ("error" in validationResult) {
-      return NextResponse.json(
-        { error: validationResult.error },
-        { status: validationResult.status }
-      );
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return { error: "Unauthorized", status: 401 };
     }
 
-    const { excelfile, wordfile, pptfile, textfile, user, typingSpeedValue } =
-      validationResult;
+    const token = authHeader.split(" ")[1];
+
+    if (!token) {
+      return { error: "Token is required", status: 401 };
+    }
+
+    const tokenData = extractDataFromToken(token);
+
+    if (!tokenData) {
+      return { error: "Invalid token", status: 401 };
+    }
+
+    const { user } = tokenData as { user: { email: string } };
+
+    if (!user) {
+      return { error: "User not found", status: 404 };
+    }
 
     const fetched_user = await prisma.user.findUnique({
       where: { email: user.email },
@@ -108,65 +75,45 @@ export async function POST(req: Request) {
       );
     }
 
-    const originalfolderPath = path.join(
-      process.cwd(),
-      "uploads",
-      fetched_user.hallticket,
-      "original"
-    );
+    const excelfile = await prisma.excelFile.findFirst({
+      where: { userId: fetched_user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
-    const pdfFolderPath = path.join(
-      process.cwd(),
-      "uploads",
-      fetched_user.hallticket,
-      "pdf"
-    );
+    const pptfile = await prisma.pptFile.findFirst({
+      where: { userId: fetched_user.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const wordfile = await prisma.wordFile.findFirst({
+      where: { userId: fetched_user.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const textfile = await prisma.textFile.findFirst({
+      where: { userId: fetched_user.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!excelfile || !pptfile || !wordfile || !textfile) {
+      return NextResponse.json(
+        { error: "All files must be uploaded before final submission" },
+        { status: 400 }
+      );
+    }
+
+    const exceloriginalPath = excelfile.oexcelurl;
+    const pptoriginalPath = pptfile.oppturl;
+    const wordoriginalPath = wordfile.owordurl;
+    const textoriginalPath = textfile.otexturl;
+    const excelpdfpath = excelfile.pexcelurl;
+    const pptpdfpath = pptfile.pppturl;
+    const wordpdfpath = wordfile.pwordurl;
+    const textpdfpath = textfile.ptexturl;
 
     const mergedPdfPath = path.join(
       process.cwd(),
       "uploads",
-      fetched_user.hallticket
-    );
-
-    const excelFileData = await saveFile(
-      originalfolderPath,
-      excelfile,
-      fetched_user.hallticket
-    );
-    const wordFileData = await saveFile(
-      originalfolderPath,
-      wordfile,
-      fetched_user.hallticket
-    );
-    const pptFileData = await saveFile(
-      originalfolderPath,
-      pptfile,
-      fetched_user.hallticket
-    );
-    const textFileData = await saveFile(
-      originalfolderPath,
-      textfile,
-      fetched_user.hallticket
-    );
-
-    const excelpdfpath = await localConvertToPDFWithSignatures(
-      pdfFolderPath,
-      excelFileData,
-      fetched_user.hallticket
-    );
-    const wordpdfpath = await localConvertToPDFWithSignatures(
-      pdfFolderPath,
-      wordFileData,
-      fetched_user.hallticket
-    );
-    const pptpdfpath = await localConvertToPDFWithSignatures(
-      pdfFolderPath,
-      pptFileData,
-      fetched_user.hallticket
-    );
-    const textpdfpath = await localConvertToPDFWithSignatures(
-      pdfFolderPath,
-      textFileData,
       fetched_user.hallticket
     );
 
@@ -244,8 +191,8 @@ export async function POST(req: Request) {
     });
 
     // Add word file details
-    const wordFileName = path.basename(wordfile.name);
-    const wordFileHash = path.basename(wordFileData).split(".")[0];
+    const wordFileName = wordoriginalPath.split("/").pop();
+    const wordFileHash = (wordpdfpath.split("/").pop() ?? "").split(".")[0];
 
     newPage.drawText(`Word File: ${wordFileName}`, {
       x: xOffset,
@@ -261,8 +208,9 @@ export async function POST(req: Request) {
     });
 
     // Add excel file details
-    const excelFileName = path.basename(excelfile.name);
-    const excelFileHash = path.basename(excelFileData).split(".")[0];
+    const excelFileName = path.basename(exceloriginalPath);
+    const excelFileHash = (excelpdfpath.split("/").pop() ?? "").split(".")[0];
+
     newPage.drawText(`Excel File: ${excelFileName}`, {
       x: xOffset,
       y: headingYOffset - 100,
@@ -277,8 +225,9 @@ export async function POST(req: Request) {
     });
 
     // Add PPT file details
-    const pptFileName = path.basename(pptfile.name);
-    const pptFileHash = path.basename(pptFileData).split(".")[0];
+    const pptFileName = path.basename(pptoriginalPath);
+    const pptFileHash = (pptpdfpath.split("/").pop() ?? "").split(".")[0];
+
     newPage.drawText(`PPT File: ${pptFileName}`, {
       x: xOffset,
       y: headingYOffset - 160,
@@ -293,8 +242,9 @@ export async function POST(req: Request) {
     });
 
     // Add text file details
-    const textFileName = path.basename(textfile.name);
-    const textFileHash = path.basename(textFileData).split(".")[0];
+    const textFileName = path.basename(textoriginalPath);
+    const textFileHash = (textpdfpath.split("/").pop() ?? "").split(".")[0];
+
     newPage.drawText(`Text File: ${textFileName}`, {
       x: xOffset,
       y: headingYOffset - 220,
@@ -352,10 +302,10 @@ export async function POST(req: Request) {
     // Verify all the files were saved correctly
 
     if (
-      !fs.existsSync(excelFileData) ||
-      !fs.existsSync(wordFileData) ||
-      !fs.existsSync(pptFileData) ||
-      !fs.existsSync(textFileData) ||
+      !fs.existsSync(exceloriginalPath) ||
+      !fs.existsSync(pptoriginalPath) ||
+      !fs.existsSync(wordoriginalPath) ||
+      !fs.existsSync(textoriginalPath) ||
       !fs.existsSync(excelpdfpath) ||
       !fs.existsSync(wordpdfpath) ||
       !fs.existsSync(pptpdfpath) ||
@@ -372,36 +322,35 @@ export async function POST(req: Request) {
     const istDate = new Date();
     istDate.setMinutes(istDate.getMinutes() + 330); // Convert UTC to IST (UTC+5:30)
 
-    const upload = await prisma.submission.create({
+    await prisma.submission.update({
+      where: { userId: fetched_user.id },
       data: {
-        userId: fetched_user.id,
-        oexcelurl: excelFileData,
-        oppturl: pptFileData,
-        owordurl: wordFileData,
-        otexturl: textFileData,
-        pexcelurl: excelpdfpath,
-        pppturl: pptpdfpath,
-        pwordurl: wordpdfpath,
-        ptexturl: textpdfpath,
-        mergedurl: mergedPdfFilePath,
-        typingspeed: parseInt(typingSpeedValue as string, 10),
+        mergedPdfUrl: mergedPdfFilePath,
+        filesSubmitted: true,
       },
     });
 
     await prisma.user.update({
-      where: { id: upload.userId },
+      where: { id: fetched_user.id },
       data: {
         isSubmitted: true,
         submittedAt: istDate,
       },
     });
 
-    return NextResponse.json(
-      {
-        message: "File uploaded successfully",
+    if (!fs.existsSync(mergedPdfFilePath)) {
+      return new Response("File not found", { status: 404 });
+    }
+
+    const fileBuffer = fs.readFileSync(mergedPdfFilePath);
+
+    return new Response(fileBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="${fetched_user.hallticket}.pdf"`,
       },
-      { status: 200 }
-    );
+    });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json(

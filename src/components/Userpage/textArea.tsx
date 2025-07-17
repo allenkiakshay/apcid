@@ -3,20 +3,22 @@
 import { generateToken } from "@/lib/jwttoken";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 
-export const TextArea = ({
-  setMessage,
-}: {
-  setMessage: (message: string) => void;
-}) => {
-  const [text, setText] = useState("");
+interface TextAreaProps {
+  setMessage: Dispatch<SetStateAction<string>>;
+  setSubmitStatus: Dispatch<SetStateAction<boolean>>;
+}
+
+export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus }) => {
+  const [text, setText] = useState<string>("");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [typingSpeed, setTypingSpeed] = useState<number | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const { data: session, status } = useSession();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!session) return;
     setSubmitting(true);
 
@@ -61,6 +63,7 @@ export const TextArea = ({
       }
 
       setMessage(`Submitted Successfully!`);
+      setSubmitStatus(true);
       setText(""); // Clear the text area after successful submission
     } catch (error: any) {
       console.error("Error submitting text:", error);
@@ -71,7 +74,7 @@ export const TextArea = ({
     }
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const currentText = e.target.value;
     setText(currentText);
 
@@ -86,19 +89,19 @@ export const TextArea = ({
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+  const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>): void => {
     e.preventDefault(); // disable right-click
   };
 
-  const handleCopy = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const handleCopy = (e: React.ClipboardEvent<HTMLTextAreaElement>): void => {
     e.preventDefault(); // disable Ctrl+C
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>): void => {
     e.preventDefault(); // disable Ctrl+V
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "v")) {
       e.preventDefault();
     }

@@ -8,7 +8,7 @@ import { ExcelFile, PPTFile, WordFile } from "./filesUpload";
 export const FormSubmit = ({
   setMessage,
 }: {
-  setMessage: (message: string) => void;
+  setMessage: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
@@ -159,7 +159,7 @@ export const FormSubmit = ({
           </button>
         </form>
       ) : (
-        <TextArea setMessage={setMessage} />
+        <TextArea setMessage={setMessage} setSubmitStatus={setSubmitStatus} />
       )}
 
       {showPopup && (

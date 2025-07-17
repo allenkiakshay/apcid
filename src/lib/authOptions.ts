@@ -38,7 +38,7 @@ const prisma = new PrismaClient();
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 24, // 24 hours
+    maxAge: 45 * 60, // 45 minutes (changed from 24 hours)
   },
 
   pages: {

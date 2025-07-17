@@ -6,6 +6,7 @@ import Header from "@/components/Userpage/Header";
 import LoadingScreen from "@/components/Userpage/Loadingscreen";
 import { FormSubmit } from "@/components/Userpage/submitForm";
 import QPViewer from "@/components/Userpage/viewQp";
+import ExamInstructions from "@/components/Userpage/ExamInstructions";
 import { generateToken } from "@/lib/jwttoken";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [message, setMessage] = useState("");
   const [submitstatus, setSubmitStatus] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
 
   const { data: session, status } = useSession();
 
@@ -56,6 +58,10 @@ export default function Home() {
     fetchData();
   }, [session]);
 
+  const handleProceedToExam = () => {
+    setShowInstructions(false);
+  };
+
   if (submitstatus) {
     return <AlreadySubmitted setMessage={setMessage} />;
   }
@@ -64,6 +70,17 @@ export default function Home() {
     return <LoadingScreen />;
   }
 
+  // Show instructions first
+  if (showInstructions) {
+    return (
+      <div>
+        <Navbar />
+        <ExamInstructions onProceed={handleProceedToExam} />
+      </div>
+    );
+  }
+
+  // Show main exam content after instructions
   return (
     <div>
       <Navbar />

@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
@@ -7,30 +8,38 @@ interface HeaderProps {
 }
 
 export default function Header({ session }: HeaderProps) {
-  const [timeLeft, setTimeLeft] = useState(45 * 60); // 45 minutes in seconds
+  const TOTAL_DURATION = 45 * 60 * 1000; // 45 minutes in milliseconds
+  const [timeLeft, setTimeLeft] = useState(TOTAL_DURATION / 1000);
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    // Check if a start time is already stored
+    const savedStartTime = localStorage.getItem("sessionStartTime");
+    let sessionStartTime: number;
 
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            signOut({ callbackUrl: "/login" });
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
-    } else if (timeLeft === 0) {
-      signOut({ callbackUrl: "/login" });
+    if (savedStartTime) {
+      sessionStartTime = parseInt(savedStartTime);
+    } else {
+      sessionStartTime = Date.now();
+      localStorage.setItem("sessionStartTime", sessionStartTime.toString());
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
+    const updateTimer = () => {
+      const elapsed = Date.now() - sessionStartTime;
+      const remaining = Math.max(TOTAL_DURATION - elapsed, 0);
+      setTimeLeft(Math.floor(remaining / 1000));
+
+      if (remaining <= 0) {
+        signOut({ callbackUrl: "/login" });
+      }
     };
-  }, [isActive, timeLeft]);
+
+    updateTimer(); // Call immediately on mount
+
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

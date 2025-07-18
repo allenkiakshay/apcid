@@ -11,6 +11,7 @@ declare module "next-auth" {
       name?: string;
       hallticket?: string;
       role: "ADMIN" | "USER" | "SUPER_ADMIN";
+      exp?: number; // ✅ Added for timer tracking
     };
   }
 
@@ -30,6 +31,7 @@ declare module "next-auth/jwt" {
     name?: string;
     hallticket?: string;
     role: "ADMIN" | "USER" | "SUPER_ADMIN";
+    exp?: number; // ✅ Added for timer tracking
   }
 }
 
@@ -38,7 +40,7 @@ const prisma = new PrismaClient();
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 45 * 60, // 45 minutes (changed from 24 hours)
+    maxAge: 45 * 60, // 45 minutes
   },
 
   pages: {
@@ -89,10 +91,9 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isPasswordValid) {
-            throw new Error("Invalid password.");
+            throw new Error("Invalid email or password."); // ✅ Use generic error
           }
 
-          // Map the role to allowed values, or throw if not allowed
           const allowedRoles = ["ADMIN", "USER", "SUPER_ADMIN"] as const;
           if (!allowedRoles.includes(user.role as any)) {
             throw new Error("User role is not allowed.");
@@ -100,16 +101,15 @@ export const authOptions: NextAuthOptions = {
 
           await prisma.user.update({
             where: { id: user.id },
-            data: { logedInAt: new Date() }, // Update last login time
+            data: { logedInAt: new Date() },
           });
 
-          // Return only the fields required by next-auth User type (no password)
           return {
             id: user.id,
             email: user.email,
             name: user.name,
-            hallticket: user.hallticket ?? undefined, // Ensure hallticket matches expected type
-            role: user.role as "ADMIN" | "USER" | "SUPER_ADMIN", // Ensure role matches expected type
+            hallticket: user.hallticket ?? undefined,
+            role: user.role as "ADMIN" | "USER" | "SUPER_ADMIN",
           };
         } catch (error) {
           console.error("Error in authorize:", error);
@@ -123,23 +123,25 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      // Check if `user` has `accessToken` property
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
         token.hallticket = user.hallticket;
         token.role = user.role;
+        token.exp = Math.floor(Date.now() / 1000) + 45 * 60; // ✅ Set JWT expiry (in seconds)
       }
       return token;
     },
+
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.name = token.name;
         session.user.hallticket = token.hallticket;
-        session.user.role = token.role as "ADMIN" | "USER" | "SUPER_ADMIN"; // Ensure role matches expected type
+        session.user.role = token.role as "ADMIN" | "USER" | "SUPER_ADMIN";
+        session.user.exp = token.exp; // ✅ Pass exp to session for client timer
       }
       return session;
     },

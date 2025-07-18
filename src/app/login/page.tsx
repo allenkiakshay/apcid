@@ -39,7 +39,7 @@ export default function LoginPage() {
   }, [router, session]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-200 to-white-900 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
@@ -52,10 +52,10 @@ export default function LoginPage() {
       <div className="flex items-center justify-center min-h-screen px-4 py-12 relative z-10">
         <div className="w-full max-w-md relative">
           {/* Glassmorphism card */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/10 relative overflow-hidden">
             {/* Subtle glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-3xl blur-xl"></div>
-            
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-blue-500/10 rounded-3xl blur-xl"></div>
+
             <div className="relative z-10">
               {/* Header */}
               <div className="text-center mb-8">
@@ -71,7 +71,7 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} className="space-y-6">
                 {/* Email Field */}
                 <div className="group">
-                  <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                     Email Address
                   </label>
                   <div className="relative">
@@ -147,7 +147,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-500 to-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg relative overflow-hidden"
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-800 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg relative overflow-hidden"
                 >
                   {loading && (
                     <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center">

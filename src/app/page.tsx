@@ -13,15 +13,15 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [submitstatus, setSubmitStatus] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
 
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (!session) return; // Ensure session is defined before calling fetchData
-
     const fetchData = async () => {
+      if (!session) return;
+
       const token = generateToken(
         {
           user: session?.user,
@@ -50,7 +50,8 @@ export default function Home() {
 
         setSubmitStatus(false);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching submission status:", error);
+        setMessage("An error occurred while fetching submission status.");
         setSubmitStatus(false);
       }
     };
@@ -62,15 +63,14 @@ export default function Home() {
     setShowInstructions(false);
   };
 
-  if (submitstatus) {
-    return <AlreadySubmitted setMessage={setMessage} />;
-  }
-
   if (status === "loading" || !session) {
     return <LoadingScreen />;
   }
 
-  // Show instructions first
+  if (submitStatus) {
+    return <AlreadySubmitted setMessage={setMessage} />;
+  }
+
   if (showInstructions) {
     return (
       <div>
@@ -80,7 +80,6 @@ export default function Home() {
     );
   }
 
-  // Show main exam content after instructions
   return (
     <div>
       <Navbar />

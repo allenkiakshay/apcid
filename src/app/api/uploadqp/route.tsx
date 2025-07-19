@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const userfile = body.get("questionpaper") as File;
     const examslot = body.get("examslot") as string;
     const examdate = body.get("examdate") as string;
-    const otp = body.get("otp") as string;
+    const password = body.get("password") as string;
     const authHeader = req.headers.get("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -68,9 +68,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!otp || otp.length !== 6) {
+    if (!password || password.length < 8) {
       return NextResponse.json(
-        { error: "Invalid OTP. It must be 6 digits/Characters." },
+        { error: "Password must be at least 8 characters long." },
         { status: 400 }
       );
     }
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
 
     fileStream.end();
 
-    const hashedOtp = bcrypt.hashSync(otp, 10);
+    const hashedOtp = bcrypt.hashSync(password, 10);
 
     const prevqp = await prisma.questionPaper.findFirst({
       where: {
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
         where: { id: prevqp.id },
         data: {
           fileUrl: filePath,
-          ...(otp ? { otp: hashedOtp } : {}),
+          ...(password ? { password: hashedOtp } : {}),
         },
       });
 
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
         fileUrl: filePath,
         examslot,
         examdate,
-        otp: hashedOtp,
+        password: hashedOtp,
       },
     });
 

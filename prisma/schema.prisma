@@ -14,19 +14,19 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  hallticket  String    @unique
-  dob         String    // Date of birth stored as string in YYYY-MM-DD format
-  role        Role      @default(USER)
-  isSubmitted Boolean   @default(false)
+  hallticket  String       @unique
+  dob         String // Date of birth stored as string in YYYY-MM-DD format
+  role        Role         @default(USER)
+  isSubmitted Boolean      @default(false)
   submittedAt DateTime?
   logedInAt   DateTime?
   examslot    String
   examdate    String
   examroom    String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   submissions Submission[]
   excelFiles  excelFile[]
   wordFiles   wordFile[]
@@ -48,7 +48,7 @@ model Submission {
   filesSubmitted Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
 }
 
 model excelFile {
@@ -57,7 +57,7 @@ model excelFile {
   oexcelurl String
   pexcelurl String
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model wordFile {
@@ -66,7 +66,7 @@ model wordFile {
   owordurl  String
   pwordurl  String
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model pptFile {
@@ -75,7 +75,7 @@ model pptFile {
   oppturl   String
   pppturl   String
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model textFile {
@@ -85,15 +85,16 @@ model textFile {
   ptexturl    String
   typingspeed Int
   createdAt   DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model QuestionPaper {
-  id       String @id @default(cuid())
-  fileUrl  String
-  examslot String
-  examdate String
-  otp      String @unique
+  id        String   @id @default(cuid())
+  fileUrl   String
+  examslot  String
+  examdate  String
+  password  String   @unique
+  display   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

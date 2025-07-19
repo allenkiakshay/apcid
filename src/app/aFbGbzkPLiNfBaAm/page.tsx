@@ -79,7 +79,7 @@ const DashboardPage = () => {
     formData.append("questionpaper", questionPaper);
     formData.append("examslot", examSlot);
     formData.append("examdate", examDate);
-    formData.append("otp", otp);
+    formData.append("password", otp);
 
     try {
       const token = generateToken({ user: session.user }, 60);
@@ -334,7 +334,7 @@ const DashboardPage = () => {
                 onChange={(e) => setOtp(e.target.value)}
                 type="text"
                 value={otp}
-                placeholder="Enter OTP"
+                placeholder="Enter Password to protect the file"
                 className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button

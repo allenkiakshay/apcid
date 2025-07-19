@@ -22,26 +22,14 @@ export async function GET(req: Request) {
 
     // Validate token and extract data
     const tokenData = extractDataFromToken(token);
-    if (
-      !tokenData ||
-      typeof tokenData !== "object" ||
-      !("user" in tokenData) ||
-      !("otp" in tokenData)
-    ) {
+    if (!tokenData || typeof tokenData !== "object" || !("user" in tokenData)) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const { user, otp } = tokenData as { user: { id: string }; otp: string };
+    const { user } = tokenData as { user: { id: string } };
 
     if (!user || !user.id) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (!otp || otp.length !== 6) {
-      return NextResponse.json(
-        { error: "Invalid OTP. It must be 6 digits/characters." },
-        { status: 400 }
-      );
     }
 
     // Fetch user from database
@@ -66,12 +54,6 @@ export async function GET(req: Request) {
         { error: "Question paper not found" },
         { status: 400 }
       );
-    }
-
-    // Validate OTP
-    const isOtpValid = await bcrypt.compare(otp, questionPaper.otp);
-    if (!isOtpValid) {
-      return NextResponse.json({ error: "Invalid OTP" }, { status: 403 });
     }
 
     if (!fs.existsSync(questionPaper.fileUrl)) {

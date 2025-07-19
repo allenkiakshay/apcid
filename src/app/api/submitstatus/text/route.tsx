@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     }
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: (tokenData as { user: { email: string } }).user.email },
+      where: { hallticket: (tokenData as { user: { hallticket: string } }).user.hallticket },
     });
 
     if (!fetched_user) {

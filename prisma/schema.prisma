@@ -1,6 +1,5 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
@@ -16,11 +15,10 @@ datasource db {
 
 model User {
   id          String    @id @default(cuid())
-  email       String    @unique
   name        String
-  password    String
-  role        Role      @default(USER)
   hallticket  String    @unique
+  dob         String    // Date of birth stored as string in YYYY-MM-DD format
+  role        Role      @default(USER)
   isSubmitted Boolean   @default(false)
   submittedAt DateTime?
   logedInAt   DateTime?
@@ -29,7 +27,6 @@ model User {
   examroom    String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
   submissions Submission[]
   excelFiles  excelFile[]
   wordFiles   wordFile[]
@@ -51,7 +48,6 @@ model Submission {
   filesSubmitted Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -61,7 +57,6 @@ model excelFile {
   oexcelurl String
   pexcelurl String
   createdAt DateTime @default(now())
-
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -71,7 +66,6 @@ model wordFile {
   owordurl  String
   pwordurl  String
   createdAt DateTime @default(now())
-
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -81,7 +75,6 @@ model pptFile {
   oppturl   String
   pppturl   String
   createdAt DateTime @default(now())
-
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -92,7 +85,6 @@ model textFile {
   ptexturl    String
   typingspeed Int
   createdAt   DateTime @default(now())
-
   user User @relation(fields: [userId], references: [id])
 }
 

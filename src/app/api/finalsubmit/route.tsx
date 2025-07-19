@@ -54,14 +54,14 @@ export async function GET(req: Request) {
       return { error: "Invalid token", status: 401 };
     }
 
-    const { user } = tokenData as { user: { email: string } };
+    const { user } = tokenData as { user: { hallticket: string } };
 
     if (!user) {
       return { error: "User not found", status: 404 };
     }
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { hallticket: user.hallticket },
     });
 
     if (!fetched_user) {

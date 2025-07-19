@@ -143,7 +143,7 @@ export const FormSubmit = ({
   return (
     <div className="flex-1 p-5">
       {submitstatus ? (
-        <form onSubmit={handleSubmit} className="mb-5">
+        <form onSubmit={handleSubmit} className="mb-5 pb-10">
           <h3 className="text-lg font-semibold mb-3">Upload Files</h3>
           <div className="space-y-3">
             <ExcelFile setMessage={setMessage} />
@@ -155,7 +155,7 @@ export const FormSubmit = ({
             type="submit"
             className="mt-5 bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition-colors"
           >
-            {loading ? "Submitting..." : "Submit Files"}
+            {loading ? "Submitting..." : "Submit All Files"}
           </button>
         </form>
       ) : (

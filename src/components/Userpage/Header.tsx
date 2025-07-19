@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
+import IP from "./ip";
 
 interface HeaderProps {
   session: any;
@@ -58,7 +59,7 @@ export default function Header({ session }: HeaderProps) {
   return (
     <header className="w-full bg-white shadow-md px-6 md:px-16 py-4 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
       <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
-        <h1 className="text-lg md:text-2xl font-semibold text-gray-700">
+        <h1 className="text-lg md:text-xl font-semibold text-gray-700">
           Name:
         </h1>
         <span className="text-base md:text-xl font-medium text-gray-900">
@@ -81,7 +82,7 @@ export default function Header({ session }: HeaderProps) {
       </div>
 
       <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
-        <h2 className="text-lg md:text-2xl font-semibold text-gray-700">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-700">
           Hall No:
         </h2>
         <span className="text-base md:text-xl font-medium text-gray-900">
@@ -89,8 +90,10 @@ export default function Header({ session }: HeaderProps) {
         </span>
       </div>
 
+      <IP />
+
       <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
-        <h2 className="text-lg md:text-2xl font-semibold text-gray-700">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-700">
           Hall Ticket No:
         </h2>
         <span className="text-base md:text-xl font-medium text-gray-900">

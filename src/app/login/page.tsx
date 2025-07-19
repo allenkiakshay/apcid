@@ -41,86 +41,90 @@ export default function LoginPage() {
   }, [router, session]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-200 to-white-900 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-4000"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+      {/* macOS-style background texture */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(59,130,246,0.15)_1px,transparent_0)] bg-[length:32px_32px]"></div>
       </div>
+
+      
       
       <Navbar />
       
-      <div className="flex items-center justify-center min-h-screen px-4 py-12 relative z-10">
+      <div className="flex items-center justify-center px-6 py-12 relative z-10">
         <div className="w-full max-w-md relative">
-          {/* Glassmorphism card */}
-          <div className="bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/10 relative overflow-hidden">
-            {/* Subtle glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-blue-500/10 rounded-3xl blur-xl"></div>
-
-            <div className="relative z-10">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-                <p className="text-white/70">Sign in to your account</p>
+          {/* macOS-style card with multiple shadows */}
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 relative overflow-hidden" 
+               style={{
+                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.9)'
+               }}>
+            
+            {/* Gradient header section */}
+            <div className="relative px-8 pt-8 pb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
+              
+              <div className="relative text-center">
+                
+                
+                <h1 className="text-3xl font-light text-gray-900 mb-2 tracking-tight">Welcome</h1>
+                <p className="text-gray-600 font-light">Sign in to continue</p>
               </div>
+            </div>
 
+            {/* Form section */}
+            <div className="px-8 pb-8">
               <form onSubmit={handleLogin} className="space-y-6">
                 {/* Hall Ticket Field */}
-                <div className="group">
-                  <label htmlFor="hallticket" className="block text-sm font-medium text-white mb-2">
+                <div className="space-y-2">
+                  <label htmlFor="hallticket" className="block text-sm font-medium text-gray-700 pt-2">
                     Hall Ticket Number
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
                     <input
                       type="text"
                       id="hallticket"
                       value={hallticket}
                       onChange={(e) => setHallticket(e.target.value.toUpperCase())}
-                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm uppercase tracking-wider"
-                      placeholder="Enter your hall ticket number"
+                      className="w-full px-4 py-3.5 bg-gray-50/80 border border-gray-200/80 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 uppercase tracking-widest text-sm font-mono backdrop-blur-sm hover:bg-white/50 hover:border-gray-300"
+                      placeholder="Enter hall ticket number"
                       required
+                      style={{
+                        boxShadow: 'inset 0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                      }}
                     />
                   </div>
                 </div>
 
                 {/* Date of Birth Field */}
-                <div className="group">
-                  <label htmlFor="dob" className="block text-sm font-medium text-white/90 mb-2">
+                <div className="space-y-2">
+                  <label htmlFor="dob" className="block text-sm font-medium text-gray-700">
                     Date of Birth
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
                     <input
                       type="date"
                       id="dob"
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm [color-scheme:dark]"
+                      className="w-full px-4 py-3.5 bg-gray-50/80 border border-gray-200/80 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-sm backdrop-blur-sm hover:bg-white/50 hover:border-gray-300 [color-scheme:light]"
                       required
                       max={new Date().toISOString().split('T')[0]}
+                      style={{
+                        boxShadow: 'inset 0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                      }}
                     />
                   </div>
-                  <p className="text-white/50 text-xs mt-1">Select your date of birth</p>
                 </div>
 
                 {/* Error Message */}
                 {error && (
-                  <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 backdrop-blur-sm">
+                  <div className="bg-red-50/80 backdrop-blur-sm border border-red-200/80 rounded-xl p-4" 
+                       style={{boxShadow: 'inset 0 1px 2px 0 rgba(239, 68, 68, 0.1)'}}>
                     <div className="flex items-center">
-                      <svg className="h-5 w-5 text-red-300 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.632 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      <svg className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-red-300 text-sm">{error}</span>
+                      <span className="text-red-700 text-sm font-medium">{error}</span>
                     </div>
                   </div>
                 )}
@@ -129,18 +133,33 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-500 to-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-800 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg relative overflow-hidden"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 px-6 rounded-xl font-medium text-base hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden active:scale-[0.98]"
+                  style={{
+                    boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+                  }}
                 >
                   {loading && (
-                    <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/10 rounded-xl flex items-center justify-center">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     </div>
                   )}
-                  {loading ? "Signing in..." : "Sign In"}
+                  <span className="relative z-10">
+                    {loading ? "Signing in..." : "Sign In"}
+                  </span>
                 </button>
               </form>
+
+              {/* Footer text */}
+              <div className="mt-8 pt-6 border-t border-gray-100/60 text-center">
+                <p className="text-gray-500 text-sm font-light">
+                  Secure authentication powered by your credentials
+                </p>
+              </div>
             </div>
           </div>
+
+          {/* macOS-style reflection */}
+          <div className="absolute inset-0 top-1/2 bg-gradient-to-t from-white/10 to-transparent rounded-b-2xl pointer-events-none"></div>
         </div>
       </div>
     </div>

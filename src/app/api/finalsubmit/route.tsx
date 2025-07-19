@@ -3,7 +3,6 @@ import fs from "fs";
 import { NextResponse } from "next/server";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import { PrismaClient } from "@/generated/prisma";
-import { localConvertToPDFWithSignatures } from "@/lib/localFileConvert";
 import { createCipheriv, createDecipheriv, createHash } from "crypto";
 
 const prisma = new PrismaClient();

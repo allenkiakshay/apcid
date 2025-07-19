@@ -27,7 +27,7 @@ export async function localConvertToPDFWithSignatures(
 
   const command = process.platform === 'win32' 
     ? `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf --outdir "${folderPath}" "${inputPath1}"`
-    : `soffice --headless --convert-to pdf --outdir "${folderPath}" "${inputPath1}"`;
+    : `libreoffice --headless --convert-to pdf --outdir "${folderPath}" "${inputPath1}"`;
   const { stderr } = await execAsync(command);
   if (stderr && !stderr.includes("SyntaxWarning")) {
     throw new Error(`Failed to convert file to PDF: ${stderr}`);

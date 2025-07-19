@@ -119,178 +119,107 @@ export async function GET(req: Request) {
     // Merge all PDFs into one
     const { PDFDocument, rgb } = await import("pdf-lib");
     const mergedPdf = await PDFDocument.create();
+    const oFiles = [
+      exceloriginalPath,
+      pptoriginalPath,
+      wordoriginalPath,
+      textoriginalPath,
+    ];
     const pdfFiles = [excelpdfpath, wordpdfpath, pptpdfpath, textpdfpath];
-    for (const pdfFile of pdfFiles) {
+    const originalFileNames = oFiles.map((filePath) => path.basename(filePath));
+
+    for (const [index, pdfFile] of pdfFiles.entries()) {
       const pdfBytes = fs.readFileSync(pdfFile);
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const copiedPages = await mergedPdf.copyPages(
         pdfDoc,
         pdfDoc.getPageIndices()
       );
-      copiedPages.forEach((page) => mergedPdf.addPage(page));
+
+      for (const page of copiedPages) {
+        mergedPdf.addPage(page);
+
+        // Add a new page with logos and details after each PDF page
+        const logoPage = mergedPdf.addPage();
+
+        const leftLogoPath = path.join(
+          process.cwd(),
+          "public",
+          "ap_police.png"
+        );
+        const rightLogoPath = path.join(process.cwd(), "public", "ap.png");
+
+        if (!fs.existsSync(leftLogoPath)) {
+          throw new Error(`Left logo file not found: ${leftLogoPath}`);
+        }
+
+        if (!fs.existsSync(rightLogoPath)) {
+          throw new Error(`Right logo file not found: ${rightLogoPath}`);
+        }
+
+        const leftLogoBytes = fs.readFileSync(leftLogoPath);
+        const rightLogoBytes = fs.readFileSync(rightLogoPath);
+
+        const leftLogoImage = await mergedPdf.embedPng(leftLogoBytes);
+        const rightLogoImage = await mergedPdf.embedPng(rightLogoBytes);
+
+        const leftLogoWidth = 50; // Fixed width for left logo
+        const leftLogoHeight = 50; // Fixed height for left logo
+        const rightLogoWidth = 50; // Fixed width for right logo
+        const rightLogoHeight = 50; // Fixed height for right logo
+
+        const leftLogoXOffset = 50; // Distance from the left
+        const leftLogoYOffset = logoPage.getHeight() - leftLogoHeight - 20; // Distance from the top
+
+        const rightLogoXOffset = logoPage.getWidth() - rightLogoWidth - 50; // Distance from the right
+        const rightLogoYOffset = logoPage.getHeight() - rightLogoHeight - 20; // Distance from the top
+
+        // Draw the left logo
+        logoPage.drawImage(leftLogoImage, {
+          x: leftLogoXOffset,
+          y: leftLogoYOffset,
+          width: leftLogoWidth,
+          height: leftLogoHeight,
+        });
+
+        // Draw the right logo
+        logoPage.drawImage(rightLogoImage, {
+          x: rightLogoXOffset,
+          y: rightLogoYOffset,
+          width: rightLogoWidth,
+          height: rightLogoHeight,
+        });
+
+        const yOffset = 50; // Distance from the bottom
+        const xOffset = 50; // Distance from the left
+
+        // Add a page heading
+        const headingYOffset = logoPage.getHeight() - 150; // Position below the logos
+        logoPage.drawText("Submission Report", {
+          x: xOffset,
+          y: headingYOffset,
+          size: 28,
+          color: rgb(0, 0, 0),
+        });
+
+        // Add original file name and PDF file name
+        const originalFileName = originalFileNames[index];
+        const pdfFileName = path.basename(pdfFile);
+
+        logoPage.drawText(`Original File: ${originalFileName}`, {
+          x: xOffset,
+          y: headingYOffset - 40,
+          size: 10,
+          color: rgb(0, 0, 0),
+        });
+        logoPage.drawText(`PDF File: ${pdfFileName}`, {
+          x: xOffset,
+          y: headingYOffset - 70,
+          size: 10,
+          color: rgb(0, 0, 0),
+        });
+      }
     }
-
-    // Add a new empty page with custom content
-    const newPage = mergedPdf.addPage();
-
-    const leftLogoPath = path.join(process.cwd(), "public", "ap_police.png");
-    const rightLogoPath = path.join(process.cwd(), "public", "ap.png");
-
-    if (!fs.existsSync(leftLogoPath)) {
-      throw new Error(`Left logo file not found: ${leftLogoPath}`);
-    }
-
-    if (!fs.existsSync(rightLogoPath)) {
-      throw new Error(`Right logo file not found: ${rightLogoPath}`);
-    }
-
-    const leftLogoBytes = fs.readFileSync(leftLogoPath);
-    const rightLogoBytes = fs.readFileSync(rightLogoPath);
-
-    const leftLogoImage = await mergedPdf.embedPng(leftLogoBytes);
-    const rightLogoImage = await mergedPdf.embedPng(rightLogoBytes);
-
-    const leftLogoWidth = 50; // Fixed width for left logo
-    const leftLogoHeight = 50; // Fixed height for left logo
-    const rightLogoWidth = 50; // Fixed width for right logo
-    const rightLogoHeight = 50; // Fixed height for right logo
-
-    const leftLogoXOffset = 50; // Distance from the left
-    const leftLogoYOffset = newPage.getHeight() - leftLogoHeight - 20; // Distance from the top
-
-    const rightLogoXOffset = newPage.getWidth() - rightLogoWidth - 50; // Distance from the right
-    const rightLogoYOffset = newPage.getHeight() - rightLogoHeight - 20; // Distance from the top
-
-    // Draw the left logo
-    newPage.drawImage(leftLogoImage, {
-      x: leftLogoXOffset,
-      y: leftLogoYOffset,
-      width: leftLogoWidth,
-      height: leftLogoHeight,
-    });
-
-    // Draw the right logo
-    newPage.drawImage(rightLogoImage, {
-      x: rightLogoXOffset,
-      y: rightLogoYOffset,
-      width: rightLogoWidth,
-      height: rightLogoHeight,
-    });
-    const yOffset = 50; // Distance from the bottom
-    const xOffset = 50; // Distance from the left
-
-    // wite context in the page from starting from 50px from left and 50px from bottom
-    // Add a page heading
-    const headingYOffset = newPage.getHeight() - 150; // Position below the logos
-    newPage.drawText("Submission Report", {
-      x: xOffset,
-      y: headingYOffset,
-      size: 28,
-      color: rgb(0, 0, 0),
-    });
-
-    // Add word file details
-    const wordFileName = wordoriginalPath.split("/").pop();
-    const wordFileHash = (wordpdfpath.split("/").pop() ?? "").split(".")[0];
-
-    newPage.drawText(`Word File: ${wordFileName}`, {
-      x: xOffset,
-      y: headingYOffset - 40,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    newPage.drawText(`Word File Hash: ${wordFileHash}`, {
-      x: xOffset,
-      y: headingYOffset - 70,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-
-    // Add excel file details
-    const excelFileName = path.basename(exceloriginalPath);
-    const excelFileHash = (excelpdfpath.split("/").pop() ?? "").split(".")[0];
-
-    newPage.drawText(`Excel File: ${excelFileName}`, {
-      x: xOffset,
-      y: headingYOffset - 100,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    newPage.drawText(`Excel File Hash: ${excelFileHash}`, {
-      x: xOffset,
-      y: headingYOffset - 130,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-
-    // Add PPT file details
-    const pptFileName = path.basename(pptoriginalPath);
-    const pptFileHash = (pptpdfpath.split("/").pop() ?? "").split(".")[0];
-
-    newPage.drawText(`PPT File: ${pptFileName}`, {
-      x: xOffset,
-      y: headingYOffset - 160,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    newPage.drawText(`PPT File Hash: ${pptFileHash}`, {
-      x: xOffset,
-      y: headingYOffset - 190,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-
-    // Add text file details
-    const textFileName = path.basename(textoriginalPath);
-    const textFileHash = (textpdfpath.split("/").pop() ?? "").split(".")[0];
-
-    newPage.drawText(`Text File: ${textFileName}`, {
-      x: xOffset,
-      y: headingYOffset - 220,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    newPage.drawText(`Text File Hash: ${textFileHash}`, {
-      x: xOffset,
-      y: headingYOffset - 250,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-
-    // Draw the provided signature
-    const signatureWidth = 150; // Fixed width
-    const signatureHeight = 50; // Fixed height
-    const signatureImageBytes = fs.readFileSync(
-      path.join(process.cwd(), "public", "sign.png")
-    ); // Replace with actual path
-    const signatureImage = await mergedPdf.embedPng(signatureImageBytes);
-    newPage.drawImage(signatureImage, {
-      x: xOffset,
-      y: yOffset,
-      width: signatureWidth,
-      height: signatureHeight,
-    });
-
-    // Add names and designations side by side below the signature on the page
-    const fontSize = 18;
-    const textYOffset = yOffset - 20; // Position below the signature
-    const spacing = 200; // Horizontal spacing between name-designation pairs
-
-    const entries = [
-      { name: "DGP" },
-      { name: "Invigilator" },
-      { name: "Candidate" },
-    ];
-
-    entries.forEach((entry, index) => {
-      const xPosition = xOffset + index * spacing;
-      newPage.drawText(entry.name, {
-        x: xPosition,
-        y: textYOffset,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-      });
-    });
 
     const mergedPdfBytes = await mergedPdf.save();
     const mergedPdfFileName = `merged_${fetched_user.hallticket}.pdf`;
@@ -299,9 +228,14 @@ export async function GET(req: Request) {
     // Encrypt the PDF bytes using provided encryption parameters
     const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY || "", "hex");
     const encryptionIv = Buffer.from(process.env.ENCRYPTION_IV || "", "hex");
-    const encryptionAlgorithm = process.env.ENCRYPTION_ALGORITHM || "aes-256-cbc";
+    const encryptionAlgorithm =
+      process.env.ENCRYPTION_ALGORITHM || "aes-256-cbc";
 
-    const cipher = createCipheriv(encryptionAlgorithm, encryptionKey, encryptionIv);
+    const cipher = createCipheriv(
+      encryptionAlgorithm,
+      encryptionKey,
+      encryptionIv
+    );
     const encryptedPdfBytes = Buffer.concat([
       cipher.update(mergedPdfBytes),
       cipher.final(),
@@ -354,7 +288,11 @@ export async function GET(req: Request) {
 
     const encryptedFileBuffer = fs.readFileSync(mergedPdfFilePath);
 
-    const decipher = createDecipheriv(encryptionAlgorithm, encryptionKey, encryptionIv);
+    const decipher = createDecipheriv(
+      encryptionAlgorithm,
+      encryptionKey,
+      encryptionIv
+    );
     const fileBuffer = Buffer.concat([
       decipher.update(encryptedFileBuffer),
       decipher.final(),

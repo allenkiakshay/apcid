@@ -13,6 +13,8 @@ declare module "next-auth" {
       role: "ADMIN" | "USER" | "SUPER_ADMIN";
       exp?: number;
       examroom?: string;
+      examslot?: string;
+      examdate?: string;
       dob: string;
     };
   }
@@ -23,6 +25,8 @@ declare module "next-auth" {
     hallticket: string;
     role: "ADMIN" | "USER" | "SUPER_ADMIN";
     examroom: string;
+    examslot: string;
+    examdate: string;
     dob: string;
   }
 }
@@ -36,6 +40,8 @@ declare module "next-auth/jwt" {
     exp?: number;
     examroom: string;
     dob: string;
+    examslot?: string;
+    examdate?: string;
   }
 }
 
@@ -81,7 +87,9 @@ export const authOptions: NextAuthOptions = {
               hallticket: true,
               role: true,
               examroom: true,
-              dob: true, // stored as bcrypt hash
+              dob: true, 
+              examslot: true,
+              examdate: true,
             },
           });
 
@@ -115,6 +123,8 @@ export const authOptions: NextAuthOptions = {
             role: user.role as "ADMIN" | "USER" | "SUPER_ADMIN",
             examroom: user.examroom,
             dob: user.dob,
+            examdate: user.examdate,
+            examslot: user.examslot,
           };
         } catch (error) {
           console.error("Error in authorize:", error);
@@ -137,6 +147,8 @@ export const authOptions: NextAuthOptions = {
         token.examroom = user.examroom;
         token.dob = user.dob;
         token.exp = Math.floor(Date.now() / 1000) + 45 * 60; // JWT expiry
+        token.examdate = user.examdate;
+        token.examslot = user.examslot;
       }
       return token;
     },
@@ -150,6 +162,8 @@ export const authOptions: NextAuthOptions = {
         session.user.examroom = token.examroom;
         session.user.dob = token.dob;
         session.user.exp = token.exp;
+        session.user.examdate = token.examdate;
+        session.user.examslot = token.examslot;
       }
       return session;
     },

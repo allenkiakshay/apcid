@@ -6,9 +6,22 @@ export default function QPViewer({ session }: { session: any }) {
   const [url, setUrl] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
+  const formatDateToYYYYMMDD = (dateStr: string): string => {
+    const [dd, mm, yyyy] = dateStr.split("-");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  console.log(formatDateToYYYYMMDD(session.user.examdate))
+
   const fetchQuestionPaper = async () => {
     try {
-      const token = generateToken({ user: session.user }, 60);
+      const userWithFormattedDate = {
+        ...session.user,
+        examdate: formatDateToYYYYMMDD(session.user.examdate),
+      };
+
+      const token = generateToken({ user: userWithFormattedDate }, 60);
+
       const res = await fetch("/api/fetch/qp", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },

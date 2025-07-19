@@ -106,6 +106,38 @@ const DashboardPage = () => {
     }
   };
 
+  const handleReleaseQuestionPaper = async () => {
+    if (!examSlot || !examDate)
+      return alert("Please select both slot and date.");
+    if (!otp) return alert("Please enter the password.");
+    if (!session?.user) return alert("User session is not available.");
+
+    const formData = new FormData();
+    formData.append("examslot", examSlot);
+    formData.append("examdate", examDate);
+    formData.append("password", otp);
+
+    try {
+      const token = generateToken({ user: session.user }, 60);
+      const response = await fetch("/api/releaseqp", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (!response.ok)
+        return alert(result.error || "Failed to release question paper.");
+      alert(result.message || "Question paper released successfully.");
+    } catch (error) {
+      console.error("Error releasing question paper:", error);
+      alert("An unexpected error occurred.");
+    }
+  };
+
+
   useEffect(() => {
     if (!session) return;
 
@@ -347,6 +379,52 @@ const DashboardPage = () => {
           </section>
         </div>
       </div>
+
+      {/* Release Question Papers */}
+      <section className="bg-white shadow-lg rounded-lg p-6 mt-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-700">
+          Release Question Papers
+        </h2>
+        <div className="flex flex-col space-y-4">
+          <select
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            value={examSlot}
+            onChange={(e) => setExamSlot(e.target.value)}
+          >
+            <option value="" disabled>
+              Select Exam Slot
+            </option>
+            <option value="FN">FN</option>
+            <option value="AN">AN</option>
+          </select>
+          <select
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            value={examDate}
+            onChange={(e) => setExamDate(e.target.value)}
+          >
+            <option value="" disabled>
+              Select Exam Date
+            </option>
+            <option value="2025-07-18">2025-07-18</option>
+            <option value="2025-07-19">2025-07-19</option>
+            <option value="2025-07-20">2025-07-20</option>
+          </select>
+          <input
+            onChange={(e) => setOtp(e.target.value)}
+            type="text"
+            value={otp}
+            placeholder="Enter Password to protect file"
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            onClick={handleReleaseQuestionPaper}
+          >
+            Release Question Paper
+          </button>
+        </div>
+      </section>
+
 
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">

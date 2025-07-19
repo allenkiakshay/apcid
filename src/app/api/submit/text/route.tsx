@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const { user } = tokenData;
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { hallticket: user.hallticket },
     });
 
     if (!fetched_user) {

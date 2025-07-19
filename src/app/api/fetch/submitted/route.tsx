@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     }
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { hallticket: user.hallticket },
       select: { role: true },
     });
 
@@ -51,7 +51,6 @@ export async function GET(req: Request) {
       select: {
         id: true,
         name: true,
-        email: true,
         hallticket: true,
         submittedAt: true,
       },

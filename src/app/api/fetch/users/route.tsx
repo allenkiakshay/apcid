@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     }
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { hallticket: user.hallticket },
       select: { role: true, examroom: true },
     });
 
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
       select: {
         id: true,
         name: true,
-        email: true,
+        hallticket: true,
         hallticket: true,
         isSubmitted: true,
         logedInAt: true,
@@ -85,7 +85,6 @@ export async function GET(req: Request) {
     const submittedUsers = enrichedSubmittedUsers.map((user) => ({
       id: user.id,
       name: user.name,
-      email: user.email,
       hallticket: user.hallticket,
       isSubmitted: user.isSubmitted,
       logedInAt: user.logedInAt,

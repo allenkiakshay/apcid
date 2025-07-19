@@ -9,7 +9,6 @@ const DashboardPage = () => {
     {
       id: string;
       name: string;
-      email: string;
       mergedPdfUrl: string;
       hallticket: string;
       isSubmitted: boolean;
@@ -160,7 +159,7 @@ const DashboardPage = () => {
                 <tr>
                   <th className="border border-gray-300 p-2">Name</th>
                   <th className="border border-gray-300 p-2">Hall Ticket No</th>
-                  <th className="border border-gray-300 p-2">Email</th>
+                  {/* <th className="border border-gray-300 p-2">Email</th> */}
                   <th className="border border-gray-300 p-2">Status</th>
                   <th className="border border-gray-300 p-2">Merged File</th>
                 </tr>
@@ -172,7 +171,7 @@ const DashboardPage = () => {
                     <td className="border border-gray-300 p-2">
                       {data.hallticket}
                     </td>
-                    <td className="border border-gray-300 p-2">{data.email}</td>
+                    {/* <td className="border border-gray-300 p-2">{data.email}</td> */}
                     <td className="border border-gray-300 p-2">
                       {data.isSubmitted
                         ? "Submitted"

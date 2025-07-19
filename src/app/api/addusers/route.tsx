@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const fetched_user = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { hallticket: user.hallticket },
       select: { role: true },
     });
 
@@ -77,9 +77,9 @@ export async function POST(req: Request) {
     }
 
     const users = lines.map((line) => {
-      const [email, name, password, hallticket, examslot, exadate, examroom] =
+      const [name, dob, hallticket, examslot, exadate, examroom] =
         line.split(",").map((field) => field.trim());
-      return { email, name, password, hallticket, examslot, exadate, examroom };
+      return { name, dob, hallticket, examslot, exadate, examroom };
     });
 
     if (users.length === 0) {
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     var addedUsers = 0;
 
     for (const user of users.slice(1)) {
-      if (!user.email || !user.password || !user.name || !user.hallticket) {
+      if (!user.dob || !user.name || !user.hallticket) {
         message =
           message +
           `\nSkipping user with incomplete data: ${JSON.stringify(user)}`;
@@ -101,23 +101,22 @@ export async function POST(req: Request) {
       }
 
       const existingUser = await prisma.user.findUnique({
-        where: { email: user.email },
+        where: { hallticket: user.hallticket },
       });
 
       if (existingUser) {
         message =
-          message + `\nUser with email ${user.email} already exists. Skipping.`;
+          message + `\nUser with hallticket ${user.hallticket} already exists. Skipping.`;
         continue;
       }
 
-      const hashedPassword = await bcrypt.hash(user.password, 10);
+      const hashedPassword = await bcrypt.hash(user.dob, 10);
 
       const adduser = await prisma.user.create({
         data: {
-          email: user.email,
-          password: hashedPassword,
-          name: user.name,
           hallticket: user.hallticket,
+          dob: hashedPassword,
+          name: user.name,
           examslot: user.examslot,
           examdate: user.exadate,
           examroom: user.examroom,
@@ -126,7 +125,7 @@ export async function POST(req: Request) {
 
       if (!adduser) {
         message =
-          message + `\nFailed to add user: ${JSON.stringify(user.email)}`;
+          message + `\nFailed to add user: ${JSON.stringify(user.hallticket)}`;
         continue;
       }
 

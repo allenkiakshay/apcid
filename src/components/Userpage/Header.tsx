@@ -82,6 +82,15 @@ export default function Header({ session }: HeaderProps) {
 
       <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
         <h2 className="text-lg md:text-2xl font-semibold text-gray-700">
+          Hall No:
+        </h2>
+        <span className="text-base md:text-xl font-medium text-gray-900">
+          {session?.user.examroom}
+        </span>
+      </div>
+
+      <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+        <h2 className="text-lg md:text-2xl font-semibold text-gray-700">
           Hall Ticket No:
         </h2>
         <span className="text-base md:text-xl font-medium text-gray-900">

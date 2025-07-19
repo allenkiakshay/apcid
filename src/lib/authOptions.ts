@@ -3,35 +3,39 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@/generated/prisma/client";
 import bcrypt from "bcrypt";
 
+// Extend types for session and JWT
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      email: string;
       name?: string;
-      hallticket?: string;
+      hallticket: string;
       role: "ADMIN" | "USER" | "SUPER_ADMIN";
-      exp?: number; // ✅ Added for timer tracking
+      exp?: number;
+      examroom?: string;
+      dob: string;
     };
   }
 
   interface User {
     id: string;
-    email: string;
     name?: string;
-    hallticket?: string;
+    hallticket: string;
     role: "ADMIN" | "USER" | "SUPER_ADMIN";
+    examroom: string;
+    dob: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    email: string;
     name?: string;
-    hallticket?: string;
+    hallticket: string;
     role: "ADMIN" | "USER" | "SUPER_ADMIN";
-    exp?: number; // ✅ Added for timer tracking
+    exp?: number;
+    examroom: string;
+    dob: string;
   }
 }
 
@@ -50,48 +54,48 @@ export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       credentials: {
-        email: {
-          label: "Email",
+        hallticket: {
+          label: "Hall Ticket Number",
           type: "text",
-          placeholder: "example@example.com",
+          placeholder: "Enter your hall ticket number",
         },
-        password: {
-          label: "Password",
-          type: "password",
-          placeholder: "Your password",
+        dob: {
+          label: "Date of Birth",
+          type: "date",
+          placeholder: "Select your date of birth",
         },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required.");
+        if (!credentials?.hallticket || !credentials?.dob) {
+          throw new Error("Hall ticket number and date of birth are required.");
         }
 
         try {
           const user = await prisma.user.findUnique({
             where: {
-              email: credentials.email,
+              hallticket: credentials.hallticket,
             },
             select: {
               id: true,
-              email: true,
-              password: true,
-              role: true,
               name: true,
               hallticket: true,
+              role: true,
+              examroom: true,
+              dob: true, // stored as bcrypt hash
             },
           });
 
           if (!user) {
-            throw new Error("User not found.");
+            throw new Error("Invalid hall ticket number or date of birth.");
           }
 
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
+          // Convert to DD-MM-YYYY before comparing
+          const [yyyy, mm, dd] = credentials.dob.split("-");
+          const formattedDob = `${dd}-${mm}-${yyyy}`;
 
-          if (!isPasswordValid) {
-            throw new Error("Invalid email or password."); // ✅ Use generic error
+          const isDobMatch = await bcrypt.compare(formattedDob, user.dob);
+          if (!isDobMatch) {
+            throw new Error("Invalid hall ticket number or date of birth.");
           }
 
           const allowedRoles = ["ADMIN", "USER", "SUPER_ADMIN"] as const;
@@ -106,10 +110,11 @@ export const authOptions: NextAuthOptions = {
 
           return {
             id: user.id,
-            email: user.email,
             name: user.name,
-            hallticket: user.hallticket ?? undefined,
+            hallticket: user.hallticket,
             role: user.role as "ADMIN" | "USER" | "SUPER_ADMIN",
+            examroom: user.examroom,
+            dob: user.dob,
           };
         } catch (error) {
           console.error("Error in authorize:", error);
@@ -117,7 +122,8 @@ export const authOptions: NextAuthOptions = {
             "An error occurred while authenticating. Please try again."
           );
         }
-      },
+      }
+
     }),
   ],
 
@@ -125,11 +131,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.email = user.email;
         token.name = user.name;
         token.hallticket = user.hallticket;
         token.role = user.role;
-        token.exp = Math.floor(Date.now() / 1000) + 45 * 60; // ✅ Set JWT expiry (in seconds)
+        token.examroom = user.examroom;
+        token.dob = user.dob;
+        token.exp = Math.floor(Date.now() / 1000) + 45 * 60; // JWT expiry
       }
       return token;
     },
@@ -137,11 +144,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
-        session.user.email = token.email;
         session.user.name = token.name;
         session.user.hallticket = token.hallticket;
         session.user.role = token.role as "ADMIN" | "USER" | "SUPER_ADMIN";
-        session.user.exp = token.exp; // ✅ Pass exp to session for client timer
+        session.user.examroom = token.examroom;
+        session.user.dob = token.dob;
+        session.user.exp = token.exp;
       }
       return session;
     },

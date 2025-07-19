@@ -211,7 +211,7 @@ const FileUploadCard = ({
         <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-2">
             <span className="text-green-500 text-sm">✅</span>
-            <span className="text-xs font-medium text-green-800">Uploaded:</span>
+            <span className="text-xs font-medium text-green-800">Saved File:</span>
           </div>
           <p className="text-xs text-green-700 mt-1 truncate">{uploadedFileName}</p>
         </div>
@@ -284,7 +284,7 @@ const FileUploadCard = ({
                     <span>{uploadProgress}%</span>
                   </span>
                 ) : (
-                  "Upload"
+                  "Save File"
                 )}
               </button>
               <button

@@ -2,16 +2,25 @@
 import { useState } from "react";
 import { generateToken } from "@/lib/jwttoken";
 
-export default function QPViewer({ session }: { session: any }) {
+export default function QPViewer({ 
+  session, 
+  textSubmitted 
+}: { 
+  session: any;
+  textSubmitted: boolean;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+
+  // Return empty fragment if text is not submitted yet
+  if (!textSubmitted) {
+    return <></>;
+  }
 
   const formatDateToYYYYMMDD = (dateStr: string): string => {
     const [dd, mm, yyyy] = dateStr.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
-
-  console.log(formatDateToYYYYMMDD(session.user.examdate))
 
   const fetchQuestionPaper = async () => {
     try {
@@ -19,20 +28,16 @@ export default function QPViewer({ session }: { session: any }) {
         ...session.user,
         examdate: formatDateToYYYYMMDD(session.user.examdate),
       };
-
       const token = generateToken({ user: userWithFormattedDate }, 60);
-
       const res = await fetch("/api/fetch/qp", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) {
         const errorData = await res.json();
         setMessage(errorData.error || "Failed to fetch question paper.");
         return;
       }
-
       const blob = await res.blob();
       setUrl(URL.createObjectURL(blob));
       setMessage("");
@@ -50,7 +55,6 @@ export default function QPViewer({ session }: { session: any }) {
           <p className="text-gray-600">
             {message || "Question paper not available."}
           </p>
-
           <button
             onClick={fetchQuestionPaper}
             disabled={!session}

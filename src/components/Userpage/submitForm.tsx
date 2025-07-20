@@ -9,8 +9,10 @@ import { FileText, FileSpreadsheet, Presentation, CheckCircle, X, Upload } from 
 
 export const FormSubmit = ({
   setMessage,
+  onTextSubmitted, // Add callback prop
 }: {
   setMessage: React.Dispatch<React.SetStateAction<string>>;
+  onTextSubmitted?: () => void; // Optional callback when text is submitted
 }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,11 @@ export const FormSubmit = ({
 
         if (response.status === 400) {
           setSubmitStatus(true);
-          setMessage("You have already submitted the Text.");
+          // setMessage("You have already submitted the Text.");
+          // Call the callback to notify parent that text is submitted
+          if (onTextSubmitted) {
+            onTextSubmitted();
+          }
           return;
         }
 
@@ -53,7 +59,15 @@ export const FormSubmit = ({
     };
 
     fetchSubmissionStatus();
-  }, [session, setMessage]);
+  }, [session, setMessage, onTextSubmitted]);
+
+  const handleTextSubmissionComplete = () => {
+    setSubmitStatus(true);
+    // Call the callback to notify parent that text is submitted
+    if (onTextSubmitted) {
+      onTextSubmitted();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,7 +209,10 @@ export const FormSubmit = ({
           </div>
         </form>
       ) : (
-        <TextArea setMessage={setMessage} setSubmitStatus={setSubmitStatus} />
+        <TextArea 
+          setMessage={setMessage} 
+          setSubmitStatus={handleTextSubmissionComplete} // Pass the modified callback
+        />
       )}
 
       {showPopup && (

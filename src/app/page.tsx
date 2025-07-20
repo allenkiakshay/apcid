@@ -15,6 +15,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [submitStatus, setSubmitStatus] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [textSubmitted, setTextSubmitted] = useState(false); // Add state for text submission
 
   const { data: session, status } = useSession();
 
@@ -38,7 +39,7 @@ export default function Home() {
         });
 
         if (response.status === 400) {
-          setMessage("You have already submitted the files.");
+          // setMessage("You have already submitted the files.");
           setSubmitStatus(true);
           return;
         }
@@ -56,7 +57,38 @@ export default function Home() {
       }
     };
 
+    // Check if text is already submitted
+    const checkTextSubmission = async () => {
+      if (!session) return;
+
+      const token = generateToken(
+        {
+          user: session?.user,
+        },
+        60 * 2
+      );
+
+      try {
+        const response = await fetch("/api/submitstatus/text", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 400) {
+          setTextSubmitted(true); // Text already submitted
+        } else {
+          setTextSubmitted(false); // Text not submitted yet
+        }
+      } catch (error) {
+        console.error("Error checking text submission:", error);
+        setTextSubmitted(false);
+      }
+    };
+
     fetchData();
+    checkTextSubmission();
   }, [session]);
 
   const handleProceedToExam = () => {
@@ -85,8 +117,11 @@ export default function Home() {
       <Navbar />
       <Header session={session} />
       <div className="flex h-[80vh]">
-        <QPViewer session={session} />
-        <FormSubmit setMessage={setMessage} />
+        <QPViewer session={session} textSubmitted={textSubmitted} />
+        <FormSubmit 
+          setMessage={setMessage} 
+          onTextSubmitted={() => setTextSubmitted(true)} // Pass callback to update text submission status
+        />
         <DisplayMessage message={{ message }} setMessage={setMessage} />
       </div>
     </div>

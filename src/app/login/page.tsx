@@ -14,25 +14,48 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
+async function handleLogin(e: React.FormEvent) {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+
+  try {
+    // Fetch local IP from API
+    const ipRes = await fetch("/api/ip");
+    const ipData = await ipRes.json();
+    const localIp = ipData.ip;
+
     const res = await signIn("credentials", {
       redirect: false,
       hallticket,
       dob,
+      localIp, // Pass local IP to credentials
     });
-    
+
     setLoading(false);
-    
+
     if (res?.ok) {
       router.push("/");
     } else {
-      setError("Invalid hall ticket number or date of birth");
+      // Handle specific error messages
+      if (res?.error) {
+        if (res.error.includes("Multiple login detected")) {
+          setError("Multiple login detected. This account is already logged in from another device/browser. Please contact the administrator if you believe this is an error.");
+        } else if (res.error.includes("Invalid hall ticket")) {
+          setError("Invalid hall ticket number or date of birth");
+        } else {
+          setError(res.error);
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
+  } catch (error) {
+    setLoading(false);
+    setError("An unexpected error occurred. Please try again.");
+    console.error("Login error:", error);
   }
+}
 
   useEffect(() => {
     if (session) {
@@ -118,13 +141,34 @@ export default function LoginPage() {
 
                 {/* Error Message */}
                 {error && (
-                  <div className="bg-red-50/80 backdrop-blur-sm border border-red-200/80 rounded-xl p-4" 
-                       style={{boxShadow: 'inset 0 1px 2px 0 rgba(239, 68, 68, 0.1)'}}>
-                    <div className="flex items-center">
-                      <svg className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div className={`backdrop-blur-sm border rounded-xl p-4 ${
+                    error.includes("Multiple login detected") 
+                      ? "bg-orange-50/80 border-orange-200/80" 
+                      : "bg-red-50/80 border-red-200/80"
+                  }`} 
+                       style={{boxShadow: `inset 0 1px 2px 0 ${error.includes("Multiple login detected") ? "rgba(251, 146, 60, 0.1)" : "rgba(239, 68, 68, 0.1)"}`}}>
+                    <div className="flex items-start">
+                      <svg className={`h-5 w-5 mr-3 flex-shrink-0 mt-0.5 ${
+                        error.includes("Multiple login detected") ? "text-orange-500" : "text-red-500"
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {error.includes("Multiple login detected") ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        )}
                       </svg>
-                      <span className="text-red-700 text-sm font-medium">{error}</span>
+                      <div>
+                        <span className={`text-sm font-medium block ${
+                          error.includes("Multiple login detected") ? "text-orange-800" : "text-red-700"
+                        }`}>
+                          {error.includes("Multiple login detected") ? "Multiple Login Detected" : "Authentication Error"}
+                        </span>
+                        <span className={`text-sm ${
+                          error.includes("Multiple login detected") ? "text-orange-700" : "text-red-600"
+                        }`}>
+                          {error}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -152,7 +196,7 @@ export default function LoginPage() {
               {/* Footer text */}
               <div className="mt-8 pt-6 border-t border-gray-100/60 text-center">
                 <p className="text-gray-500 text-sm font-light">
-                  Secure authentication powered by your credentials
+                  Secure authentication • Single session only
                 </p>
               </div>
             </div>

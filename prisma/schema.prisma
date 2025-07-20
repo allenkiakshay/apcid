@@ -20,11 +20,13 @@ model User {
   dob         String // Date of birth stored as string in YYYY-MM-DD format
   role        Role         @default(USER)
   isSubmitted Boolean      @default(false)
+  isLoggedIn  Boolean      @default(false)
   submittedAt DateTime?
   logedInAt   DateTime?
   examslot    String
   examdate    String
   examroom    String
+  ipAddress   String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   submissions Submission[]

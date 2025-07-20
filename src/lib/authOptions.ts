@@ -70,11 +70,18 @@ export const authOptions: NextAuthOptions = {
           type: "date",
           placeholder: "Select your date of birth",
         },
+        localIp: {
+          label: "Local IP",
+          type: "text",
+        },
       },
+
       async authorize(credentials) {
         if (!credentials?.hallticket || !credentials?.dob) {
           throw new Error("Hall ticket number and date of birth are required.");
         }
+
+        const localIp = credentials.localIp || "Unknown";
 
         try {
           const user = await prisma.user.findUnique({
@@ -90,6 +97,7 @@ export const authOptions: NextAuthOptions = {
               dob: true, 
               examslot: true,
               examdate: true,
+              isLoggedIn: true, // Include the new field
             },
           });
 
@@ -97,7 +105,11 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid hall ticket number or date of birth.");
           }
 
-          // Convert to DD-MM-YYYY before comparing
+          // Check if user is already logged in
+          if (user.isLoggedIn) {
+            throw new Error("Multiple login detected. This account is already logged in from another device/browser. Please contact the administrator if you believe this is an error.");
+          }
+
           const [yyyy, mm, dd] = credentials.dob.split("-");
           const formattedDob = `${dd}-${mm}-${yyyy}`;
 
@@ -106,14 +118,14 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid hall ticket number or date of birth.");
           }
 
-          const allowedRoles = ["ADMIN", "USER", "SUPER_ADMIN"] as const;
-          if (!allowedRoles.includes(user.role as any)) {
-            throw new Error("User role is not allowed.");
-          }
-
+          // Set user as logged in and update login details
           await prisma.user.update({
             where: { id: user.id },
-            data: { logedInAt: new Date() },
+            data: {
+              logedInAt: new Date(),
+              ipAddress: localIp,
+              isLoggedIn: true, // Set login status to true
+            },
           });
 
           return {
@@ -128,12 +140,9 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Error in authorize:", error);
-          throw new Error(
-            "An error occurred while authenticating. Please try again."
-          );
+          throw error; // Re-throw the original error to preserve specific error messages
         }
       }
-
     }),
   ],
 
@@ -166,6 +175,41 @@ export const authOptions: NextAuthOptions = {
         session.user.examslot = token.examslot;
       }
       return session;
+    },
+
+    // Handle sign out - reset login status
+    async signOut({ token }) {
+      if (token?.id) {
+        try {
+          await prisma.user.update({
+            where: { id: token.id as string },
+            data: {
+              isLoggedIn: false, // Set login status to false when user signs out
+            },
+          });
+        } catch (error) {
+          console.error("Error updating logout status:", error);
+        }
+      }
+      return true;
+    },
+  },
+
+  events: {
+    // Handle session end/expiry
+    async signOut({ token }) {
+      if (token?.id) {
+        try {
+          await prisma.user.update({
+            where: { id: token.id as string },
+            data: {
+              isLoggedIn: false,
+            },
+          });
+        } catch (error) {
+          console.error("Error updating logout status:", error);
+        }
+      }
     },
   },
 };

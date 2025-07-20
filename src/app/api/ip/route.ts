@@ -1,3 +1,4 @@
+// api/ip/route.ts
 import { NextResponse } from 'next/server';
 import os from 'os';
 

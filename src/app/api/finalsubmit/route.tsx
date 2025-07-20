@@ -4,8 +4,23 @@ import { NextResponse } from "next/server";
 import { extractDataFromToken } from "@/lib/jwttoken";
 import { PrismaClient } from "@/generated/prisma";
 import { createCipheriv, createDecipheriv, createHash } from "crypto";
+import os from "os";
 
 const prisma = new PrismaClient();
+
+// Function to get local IP address
+function getLocalIPAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const networkInterface of interfaces[name]) {
+      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (networkInterface.family === 'IPv4' && !networkInterface.internal) {
+        return networkInterface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
 
 export async function saveFile(
   folderPath: string,
@@ -116,6 +131,9 @@ export async function GET(req: Request) {
       fetched_user.hallticket
     );
 
+    // Get local IP address
+    const localIP = getLocalIPAddress();
+
     // Merge all PDFs into one
     const { PDFDocument, rgb } = await import("pdf-lib");
     const mergedPdf = await PDFDocument.create();
@@ -137,6 +155,33 @@ export async function GET(req: Request) {
       );
 
       for (const page of copiedPages) {
+        // Add user details to each original document page
+        page.drawText(`IP: ${localIP} | Name: ${fetched_user.name || 'N/A'} | Hall Ticket: ${fetched_user.hallticket}`, {
+          x: 50,
+          y: page.getHeight() - 20,
+          size: 8,
+          color: rgb(0.3, 0.3, 0.3), // Gray color
+        });
+
+        // Add timestamp at bottom right
+        const currentTime = new Date().toLocaleString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        const timestampText = `Generated: ${currentTime}`;
+        page.drawText(timestampText, {
+          x: page.getWidth() - 200,
+          y: 10,
+          size: 6,
+          color: rgb(0.5, 0.5, 0.5),
+        });
+
         mergedPdf.addPage(page);
 
         // Add a new page with logos and details after each PDF page
@@ -202,21 +247,55 @@ export async function GET(req: Request) {
           color: rgb(0, 0, 0),
         });
 
+        // Add user details section
+        logoPage.drawText(`Submitted by: ${fetched_user.name || 'N/A'}`, {
+          x: xOffset,
+          y: headingYOffset - 50,
+          size: 12,
+          color: rgb(0, 0, 0),
+        });
+        logoPage.drawText(`Hall Ticket: ${fetched_user.hallticket}`, {
+          x: xOffset,
+          y: headingYOffset - 70,
+          size: 12,
+          color: rgb(0, 0, 0),
+        });
+        logoPage.drawText(`IP Address: ${localIP}`, {
+          x: xOffset,
+          y: headingYOffset - 90,
+          size: 12,
+          color: rgb(0, 0, 0),
+        });
+        logoPage.drawText(`Submission Time: ${currentTime}`, {
+          x: xOffset,
+          y: headingYOffset - 110,
+          size: 10,
+          color: rgb(0, 0, 0),
+        });
+
         // Add original file name and PDF file name
         const originalFileName = originalFileNames[index];
         const pdfFileName = path.basename(pdfFile);
 
         logoPage.drawText(`Original File: ${originalFileName}`, {
           x: xOffset,
-          y: headingYOffset - 40,
+          y: headingYOffset - 140,
           size: 10,
           color: rgb(0, 0, 0),
         });
         logoPage.drawText(`PDF File: ${pdfFileName}`, {
           x: xOffset,
-          y: headingYOffset - 70,
+          y: headingYOffset - 160,
           size: 10,
           color: rgb(0, 0, 0),
+        });
+
+        // Add watermark-style user info at bottom
+        logoPage.drawText(`IP: ${localIP} | ${fetched_user.name || 'N/A'} | ${fetched_user.hallticket}`, {
+          x: xOffset,
+          y: 30,
+          size: 8,
+          color: rgb(0.3, 0.3, 0.3),
         });
       }
     }
@@ -244,7 +323,6 @@ export async function GET(req: Request) {
     fs.writeFileSync(mergedPdfFilePath, encryptedPdfBytes);
 
     // Verify all the files were saved correctly
-
     if (
       !fs.existsSync(exceloriginalPath) ||
       !fs.existsSync(pptoriginalPath) ||

@@ -5,13 +5,12 @@ import { useState } from "react";
 
 const ToastMessage = ({ message, type }: { message: string; type: 'success' | 'error' }) => {
   if (!message) return null;
-  
+
   return (
-    <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-      type === 'success' 
-        ? 'bg-green-500 text-white' 
-        : 'bg-red-500 text-white'
-    } flex items-center space-x-2 animate-pulse`}>
+    <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${type === 'success'
+      ? 'bg-green-500 text-white'
+      : 'bg-red-500 text-white'
+      } flex items-center space-x-2 animate-pulse`}>
       <span>{type === 'success' ? '✅' : '❌'}</span>
       <span>{message}</span>
     </div>
@@ -81,7 +80,7 @@ const FileUploadCard = ({
   const validateFile = (selectedFile: File): boolean => {
     const fileExtension = selectedFile.name.split(".").pop()?.toLowerCase();
     const expectedExtension = acceptedFormat.replace(".", "").toLowerCase();
-    
+
     if (fileExtension !== expectedExtension) {
       showToast(`Please select a ${acceptedFormat.toUpperCase()} file. The selected file is not supported.`, 'error');
       return false;
@@ -166,7 +165,7 @@ const FileUploadCard = ({
       setUploadProgress(100);
       setUploadedFileName(file.name);
       showToast(`${title} uploaded successfully!`, 'success');
-      
+
       // Reset file selection after successful upload
       setTimeout(() => {
         setFile(null);
@@ -196,7 +195,7 @@ const FileUploadCard = ({
   return (
     <div className={`${currentColor.bg} ${currentColor.border} border-2 rounded-xl p-4 transition-all duration-200 ${isDragOver ? currentColor.dragOver : 'hover:shadow-lg'} h-fit`}>
       <ToastMessage message={toastMessage} type={toastType} />
-      
+
       {/* Header */}
       <div className="flex items-center space-x-3 mb-3">
         <div className="text-xl">{icon}</div>
@@ -219,11 +218,10 @@ const FileUploadCard = ({
 
       {/* Upload Area */}
       <div
-        className={`border-2 border-dashed rounded-lg p-3 text-center transition-all duration-200 ${
-          isDragOver 
-            ? `${currentColor.border} bg-white` 
-            : 'border-gray-300 hover:border-gray-400 bg-white'
-        }`}
+        className={`border-2 border-dashed rounded-lg p-3 text-center transition-all duration-200 ${isDragOver
+          ? `${currentColor.border} bg-white`
+          : 'border-gray-300 hover:border-gray-400 bg-white'
+          }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -244,7 +242,7 @@ const FileUploadCard = ({
             />
             <label
               htmlFor={`file-input-${fieldName}`}
-              className={`inline-block px-3 py-2 ${currentColor.button} text-white rounded-lg cursor-pointer transition-colors duration-200 font-medium text-xs`}
+              className={`inline-block px-3 py-2 bg-blue-500 hover:bg-green-500 text-white rounded-lg cursor-pointer transition-colors duration-200 font-medium text-xs`}
             >
               {hasUploadedFile ? 'Replace File' : 'Choose File'}
             </label>
@@ -259,10 +257,10 @@ const FileUploadCard = ({
                 <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
               </div>
             </div>
-            
+
             {isUploading && (
               <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
+                <div
                   className={`${currentColor.button.split(' ')[0]} h-1.5 rounded-full transition-all duration-300`}
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
@@ -273,7 +271,7 @@ const FileUploadCard = ({
               <button
                 onClick={handleUpload}
                 disabled={isUploading}
-                className={`flex-1 py-2 px-3 ${currentColor.button} text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs`}
+                className={`flex-1 py-2 px-3 bg-blue-500 hover:bg-green-500 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs`}
               >
                 {isUploading ? (
                   <span className="flex items-center justify-center space-x-1">
@@ -310,20 +308,20 @@ const FileUploadCard = ({
 export const ExcelFile = ({ setMessage }: { setMessage: (message: string) => void }) => {
   return (
     <FileUploadCard
-      title="Excel Spreadsheet"
+      title="Upload Excel File"
       description="Upload Excel files for data processing"
       icon={
         <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-          <rect x="2" y="2" width="28" height="28" rx="3" fill="#217346"/>
-          <path d="M8 8h16v16H8V8z" fill="#ffffff"/>
-          <path d="M12.5 12l3 4-3 4h2l2-2.5L18.5 20h2l-3-4 3-4h-2l-2 2.5L14.5 12h-2z" fill="#217346"/>
+          <rect x="2" y="2" width="28" height="28" rx="3" fill="#217346" />
+          <path d="M8 8h16v16H8V8z" fill="#ffffff" />
+          <path d="M12.5 12l3 4-3 4h2l2-2.5L18.5 20h2l-3-4 3-4h-2l-2 2.5L14.5 12h-2z" fill="#217346" />
         </svg>
       }
       acceptedFormat=".xlsx"
       apiEndpoint="/api/submit/excelfile"
       fieldName="excelfile"
       setMessage={setMessage}
-      color="green"
+      color="blue"
     />
   );
 };
@@ -335,9 +333,9 @@ export const WordFile = ({ setMessage }: { setMessage: (message: string) => void
       description="Upload Word docs for processing"
       icon={
         <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-          <rect x="2" y="2" width="28" height="28" rx="3" fill="#2B579A"/>
-          <path d="M8 8h16v16H8V8z" fill="#ffffff"/>
-          <path d="M10 12h2l1.5 6L15 12h2l1.5 6L20 12h2l-2.5 8h-2L16 14.5 14.5 20h-2L10 12z" fill="#2B579A"/>
+          <rect x="2" y="2" width="28" height="28" rx="3" fill="#2B579A" />
+          <path d="M8 8h16v16H8V8z" fill="#ffffff" />
+          <path d="M10 12h2l1.5 6L15 12h2l1.5 6L20 12h2l-2.5 8h-2L16 14.5 14.5 20h-2L10 12z" fill="#2B579A" />
         </svg>
       }
       acceptedFormat=".docx"
@@ -356,16 +354,16 @@ export const PPTFile = ({ setMessage }: { setMessage: (message: string) => void 
       description="Upload PPT files for processing"
       icon={
         <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-          <rect x="2" y="2" width="28" height="28" rx="3" fill="#D24726"/>
-          <path d="M8 8h16v16H8V8z" fill="#ffffff"/>
-          <path d="M10 12h6c1.7 0 3 1.3 3 3s-1.3 3-3 3h-4v2h-2v-8zm2 2v4h4c.6 0 1-.4 1-1v-2c0-.6-.4-1-1-1h-4z" fill="#D24726"/>
+          <rect x="2" y="2" width="28" height="28" rx="3" fill="#D24726" />
+          <path d="M8 8h16v16H8V8z" fill="#ffffff" />
+          <path d="M10 12h6c1.7 0 3 1.3 3 3s-1.3 3-3 3h-4v2h-2v-8zm2 2v4h4c.6 0 1-.4 1-1v-2c0-.6-.4-1-1-1h-4z" fill="#D24726" />
         </svg>
       }
       acceptedFormat=".pptx"
       apiEndpoint="/api/submit/pptfile"
       fieldName="pptfile"
       setMessage={setMessage}
-      color="purple"
+      color="blue"
     />
   );
 };

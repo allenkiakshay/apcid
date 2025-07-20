@@ -58,10 +58,11 @@ export async function GET(req: Request) {
         id: true,
         name: true,
         hallticket: true,
-        hallticket: true,
         isSubmitted: true,
         logedInAt: true,
         examroom: true,
+        examdate: true,
+        examslot: true,
       },
     });
 
@@ -90,6 +91,8 @@ export async function GET(req: Request) {
       logedInAt: user.logedInAt,
       examroom: user.examroom,
       mergedPdfUrl: submissionMap[user.id] || null,
+      examslot: user.examslot,
+      examdate: user.examdate,
     }));
 
     return NextResponse.json(

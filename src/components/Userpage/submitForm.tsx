@@ -3,7 +3,9 @@ import { generateToken } from "@/lib/jwttoken";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { TextArea } from "./textArea";
+import { signOut } from "next-auth/react";
 import { ExcelFile, PPTFile, WordFile } from "./filesUpload";
+import { FileText, FileSpreadsheet, Presentation, CheckCircle, X, Upload } from 'lucide-react';
 
 export const FormSubmit = ({
   setMessage,
@@ -51,7 +53,7 @@ export const FormSubmit = ({
     };
 
     fetchSubmissionStatus();
-  }, [session]);
+  }, [session, setMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +77,6 @@ export const FormSubmit = ({
 
       if (response.status === 400) {
         const result = await response.json();
-
         setSubmittedData(result.formattedData);
         setMessage(result.message);
         setShowPopup(true);
@@ -132,12 +133,45 @@ export const FormSubmit = ({
 
       setMessage("Submitted Successfully!");
       setShowPopup(false);
+
+      // ✅ Sign out user after download
+      await signOut(); // No callbackUrl = default NextAuth sign-out
     } catch (error: any) {
       console.error("Error during final submission:", error);
       setMessage(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case 'excel':
+        return <FileSpreadsheet className="w-6 h-6 text-green-600" />;
+      case 'word':
+        return <FileText className="w-6 h-6 text-blue-600" />;
+      case 'ppt':
+        return <Presentation className="w-6 h-6 text-orange-600" />;
+      default:
+        return <Upload className="w-6 h-6 text-gray-600" />;
+    }
+  };
+
+  const getFileTypeName = (type: string) => {
+    switch (type) {
+      case 'excel':
+        return 'Excel File';
+      case 'word':
+        return 'Word Document';
+      case 'ppt':
+        return 'PowerPoint';
+      default:
+        return type.toUpperCase();
+    }
+  };
+
+  const getLastFile = (files: string[] | undefined) => {
+    return files && files.length > 0 ? files[files.length - 1] : null;
   };
 
   return (
@@ -151,75 +185,153 @@ export const FormSubmit = ({
             <PPTFile setMessage={setMessage} />
           </div>
           {/* Bottom part: Typing speed calculator */}
-          <button
-            type="submit"
-            className="mt-5 bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition-colors"
-          >
-            {loading ? "Submitting..." : "Submit All Files"}
-          </button>
+          <div className="flex justify-end mt-5">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-green-500 transition-colors"
+            >
+              {loading ? "Submitting..." : "Submit All Files"}
+            </button>
+          </div>
         </form>
       ) : (
         <TextArea setMessage={setMessage} setSubmitStatus={setSubmitStatus} />
       )}
 
       {showPopup && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-96 relative">
-            <button
-              onClick={() => setShowPopup(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-full"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-bold mb-4 text-center text-gray-800">
-              Uploaded Files
-            </h3>
-            <ul className="space-y-4">
-              {["excel", "word", "ppt"].map((key) => (
-                <div key={key} className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                  <li className="flex items-center mb-2">
-                    <input
-                      type="checkbox"
-                      checked={submittedData?.[key]?.length > 0}
-                      readOnly
-                      className="mr-3 h-5 w-5 text-blue-500 focus:ring-blue-400 rounded"
-                    />
-                    <span className="text-gray-700 font-medium">
-                      {key.toUpperCase()}
-                    </span>
-                  </li>
-                  <div className="flex flex-col space-y-1 pl-8">
-                    {submittedData?.[key]?.length > 0 ? (
-                      submittedData[key].map((item: string, index: number) => (
-                        <p
-                          key={index}
-                          className="text-sm text-gray-600 truncate"
-                          title={item}
-                        >
-                          {item}
-                        </p>
-                      ))
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white relative">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors rounded-full p-1 hover:bg-white/20"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Upload className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Uploaded Files</h3>
+                  <p className="text-blue-100 text-sm">Review your latest uploads</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="space-y-4">
+                {["excel", "word", "ppt"].map((key) => {
+                  const lastFile = getLastFile(submittedData?.[key]);
+                  const hasFiles = submittedData?.[key]?.length > 0;
+
+                  return (
+                    <div
+                      key={key}
+                      className={`relative overflow-hidden rounded-xl border-2 transition-all duration-200 ${hasFiles
+                        ? 'border-green-200 bg-green-50 hover:bg-green-100'
+                        : 'border-gray-200 bg-gray-50'
+                        }`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {getFileIcon(key)}
+                          </div>
+
+                          <div className="flex-grow min-w-0">
+                            <div className="flex items-center space-x-2 mb-2">
+                              {hasFiles && (
+                                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              )}
+                              <span className={`font-semibold ${hasFiles ? 'text-green-800' : 'text-gray-600'}`}>
+                                {getFileTypeName(key)}
+                              </span>
+                              {hasFiles && (
+                                <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
+                                  ✓ Uploaded
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="text-sm">
+                              {lastFile ? (
+                                <div>
+                                  <p
+                                    className="text-gray-700 font-medium break-all leading-relaxed"
+                                    title={lastFile}
+                                  >
+                                    {lastFile}
+                                  </p>
+                                  {submittedData[key].length > 1 && (
+                                    <p className="text-gray-500 text-xs mt-1">
+                                      Latest of {submittedData[key].length} files
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 italic">No file uploaded</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Submit Button */}
+              <div className="mt-8 pt-4 border-t border-gray-200">
+                <button
+                  className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${!(
+                    submittedData?.excel?.length > 0 &&
+                    submittedData?.word?.length > 0 &&
+                    submittedData?.ppt?.length > 0
+                  )
+                    ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                    : loading
+                      ? 'bg-blue-400 cursor-wait'
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-green-700 hover:to-green-700 focus:ring-blue-400 transform hover:scale-[1.02] active:scale-[0.98]'
+                    }`}
+                  disabled={
+                    !(
+                      submittedData?.excel?.length > 0 &&
+                      submittedData?.word?.length > 0 &&
+                      submittedData?.ppt?.length > 0
+                    ) || loading
+                  }
+                  onClick={handleFinalSubmit}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Finalizing...</span>
+                      </>
                     ) : (
-                      <p className="text-sm text-gray-500">No data</p>
+                      <>
+                        <CheckCircle className="w-5" />
+                        <span>Finalize Submission</span>
+                      </>
                     )}
                   </div>
-                </div>
-              ))}
-            </ul>
-            <button
-              className="mt-6 w-full bg-green-500 text-white py-3 px-4 rounded-lg shadow hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              disabled={
-                !(
+                </button>
+
+                {!(
                   submittedData?.excel?.length > 0 &&
                   submittedData?.word?.length > 0 &&
                   submittedData?.ppt?.length > 0
-                )
-              }
-              onClick={handleFinalSubmit}
-            >
-              {loading ? "Finalizing..." : "Finalize Submission"}
-            </button>
+                ) && (
+                    <p className="text-center text-sm text-gray-500 mt-2">
+                      Please upload all required file types to continue
+                    </p>
+                  )}
+              </div>
+            </div>
           </div>
         </div>
       )}

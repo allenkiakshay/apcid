@@ -14,13 +14,11 @@ export async function GET(req: Request) {
     }
 
     const token = authHeader.split(" ")[1];
-
     if (!token) {
       return NextResponse.json({ error: "Token is required" }, { status: 401 });
     }
 
     const tokenData = extractDataFromToken(token);
-
     if (!tokenData) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
@@ -36,41 +34,35 @@ export async function GET(req: Request) {
 
     const fetched_user = await prisma.user.findUnique({
       where: { hallticket: user.hallticket },
-      select: { 
-        role: true, 
-        examroom: true,
-        name: true,
-        hallticket: true 
-      },
+      select: { role: true, examroom: true, examslot: true },
     });
 
-    if (!fetched_user) {
-      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
-    }
-
-    // Check if user has admin privileges
-    if (fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN") {
+    if (
+      !fetched_user ||
+      (fetched_user.role !== "ADMIN" && fetched_user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json(
         { error: "Unauthorized access. Admins only." },
         { status: 403 }
       );
     }
 
-    // Ensure admin has an assigned room (except SUPER_ADMIN)
-    if (fetched_user.role === "ADMIN" && !fetched_user.examroom) {
-      return NextResponse.json(
-        { error: "Admin must be assigned to a room" },
-        { status: 403 }
-      );
+    // ✅ Role-based filtering
+    let userFilter: any = { role: "USER" };
+
+    if (fetched_user.role === "ADMIN") {
+      if (!fetched_user.examroom || !fetched_user.examslot) {
+        return NextResponse.json(
+          { error: "Examroom and examslot must be set for ADMIN" },
+          { status: 400 }
+        );
+      }
+      userFilter.examroom = fetched_user.examroom;
+      userFilter.examslot = fetched_user.examslot;
     }
 
-    // Build query based on admin type
-    const userQuery = {
-      where: {
-        role: "USER",
-        // SUPER_ADMIN can see all users, ADMIN only sees users from their room
-        ...(fetched_user.role === "ADMIN" ? { examroom: fetched_user.examroom } : {})
-      },
+    const enrichedSubmittedUsers = await prisma.user.findMany({
+      where: userFilter,
       select: {
         id: true,
         name: true,
@@ -81,9 +73,7 @@ export async function GET(req: Request) {
         examdate: true,
         examslot: true,
       },
-    };
-
-    const enrichedSubmittedUsers = await prisma.user.findMany(userQuery);
+    });
 
     const submissionData = await prisma.submission.findMany({
       where: {
@@ -115,16 +105,7 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json(
-      { 
-        message: "Fetched successfully.", 
-        submittedUsers,
-        adminInfo: {
-          name: fetched_user.name,
-          hallticket: fetched_user.hallticket,
-          role: fetched_user.role,
-          assignedRoom: fetched_user.examroom
-        }
-      },
+      { message: "Fetched successfully.", submittedUsers },
       { status: 200 }
     );
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@/generated/prisma/client";
 import bcrypt from "bcrypt";
+import { Console } from "console";
 
 // Extend types for session and JWT
 declare module "next-auth" {
@@ -175,23 +176,6 @@ export const authOptions: NextAuthOptions = {
         session.user.examslot = token.examslot;
       }
       return session;
-    },
-
-    // Handle sign out - reset login status
-    async signOut({ token }) {
-      if (token?.id) {
-        try {
-          await prisma.user.update({
-            where: { id: token.id as string },
-            data: {
-              isLoggedIn: false, // Set login status to false when user signs out
-            },
-          });
-        } catch (error) {
-          console.error("Error updating logout status:", error);
-        }
-      }
-      return true;
     },
   },
 

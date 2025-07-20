@@ -89,6 +89,31 @@ export async function POST(request: Request) {
       fetched_user.hallticket
     );
 
+    const formData = new FormData();
+    const cfileBuffer = fs.readFileSync(originalpath);
+    const cfileBlob = new Blob([cfileBuffer]);
+    const ofilepath = path.join(process.cwd(), "uploads/QPS/REF.pptx");
+    const ofileBlob = new Blob([cfileBuffer]);
+    formData.append("candidate", ofileBlob, path.basename(ofilepath));
+    formData.append("reference", cfileBlob, path.basename(originalpath));
+
+    const response = await fetch(
+      "https://exam-management-system-2ed1.onrender.com/api/evaluate",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: "Failed to upload file to external API" },
+        { status: 500 }
+      );
+    }
+
     const fielEntryExists = await prisma.pptFile.findFirst({
       where: { userId: fetched_user.id },
       orderBy: { createdAt: "desc" },
@@ -100,6 +125,7 @@ export async function POST(request: Request) {
           userId: fetched_user.id,
           oppturl: originalpath,
           pppturl: pdfpath,
+          score: responseData.report.total
         },
       });
       return NextResponse.json(
@@ -113,6 +139,7 @@ export async function POST(request: Request) {
         userId: fetched_user.id,
         oppturl: originalpath,
         pppturl: pdfpath,
+        score: responseData.report.total
       },
     });
 

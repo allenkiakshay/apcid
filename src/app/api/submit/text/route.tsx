@@ -97,12 +97,40 @@ export async function POST(request: Request) {
       fetched_user.hallticket
     );
 
+    const formData = new FormData();
+    const candidateText = fs.readFileSync(originalpath, "utf-8");
+    const referenceTextPath = path.join(process.cwd(), "uploads/QPS/REF.txt");
+    const referenceText = fs.readFileSync(referenceTextPath, "utf-8");
+
+    formData.append("candidate_text", candidateText);
+    formData.append("reference_text", referenceText);
+    formData.append("typing_speed", typingSpeed);
+
+    const response = await fetch(
+      "https://exam-management-system-2ed1.onrender.com/api/evaluate",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: "Failed to upload file to external API" },
+        { status: 500 }
+      );
+    }
+
     await prisma.textFile.create({
       data: {
         userId: fetched_user.id,
         otexturl: originalpath,
         ptexturl: pdfpath,
         typingspeed: Number(typingSpeed),
+        score: responseData.report.total,
+        typingScore: responseData.report.typing_speed.score,
       },
     });
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { generateToken } from "@/lib/jwttoken";
 import { useSession } from "next-auth/react";
-import { Download, Printer, Users, FileText, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Download, Printer, Users, FileText, Clock, CheckCircle, XCircle, AlertCircle, Building2 } from "lucide-react";
 
 const DashboardPage = () => {
   const [submittedData, setSubmittedData] = useState<
@@ -17,6 +17,9 @@ const DashboardPage = () => {
       examroom: string;
     }[]
   >([]);
+  
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [currentUserRoom, setCurrentUserRoom] = useState<string>("");
 
   const [isPrinting, setIsPrinting] = useState(false);
   const [printProgress, setPrintProgress] = useState({ current: 0, total: 0 });
@@ -281,6 +284,11 @@ const DashboardPage = () => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error(`Error fetching submitted users: ${errorData.error}`);
+          
+          // Handle specific unauthorized access for admins
+          if (response.status === 403) {
+            alert("Access denied. You can only view users from your assigned room.");
+          }
           return;
         }
 
@@ -292,6 +300,16 @@ const DashboardPage = () => {
         }
 
         setSubmittedData(result.submittedUsers);
+        
+        // Extract current user's role and room info from the first user data or session
+        // This assumes the backend only returns users from the admin's room
+        if (result.submittedUsers.length > 0) {
+          setCurrentUserRoom(result.submittedUsers[0].examroom);
+        }
+        
+        // You might want to add currentUserRole to the API response for better UX
+        // For now, we can infer it from session or add it as a separate API call
+        
       } catch (error) {
         console.error("Error fetching submitted users:", error);
       }
@@ -319,10 +337,31 @@ const DashboardPage = () => {
       <Navbar />
       
       <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
+        {/* Header with Room Information */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Exam Dashboard</h1>
-          <p className="text-gray-600">Monitor and manage exam submissions</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Exam Dashboard</h1>
+              <p className="text-gray-600">Monitor and manage exam submissions</p>
+            </div>
+            
+            {/* Room Information Badge */}
+            {currentUserRoom && (
+              <div className="flex items-center space-x-3">
+                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg flex items-center space-x-2">
+                  <Building2 className="h-5 w-5" />
+                  <div>
+                    <span className="text-sm font-medium">Room</span>
+                    <div className="text-lg font-bold">{currentUserRoom}</div>
+                  </div>
+                </div>
+                <div className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg">
+                  <div className="text-sm font-medium">Total Students</div>
+                  <div className="text-lg font-bold">{submittedData.length}</div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -336,6 +375,7 @@ const DashboardPage = () => {
               <div className="ml-4">
                 <h2 className="text-lg font-semibold text-gray-900">Writing Exam</h2>
                 <p className="text-3xl font-bold text-yellow-600">{writingCount}</p>
+                <p className="text-sm text-gray-500">Currently in progress</p>
               </div>
             </div>
           </div>
@@ -349,6 +389,7 @@ const DashboardPage = () => {
               <div className="ml-4">
                 <h2 className="text-lg font-semibold text-gray-900">Submitted</h2>
                 <p className="text-3xl font-bold text-green-600">{submittedCount}</p>
+                <p className="text-sm text-gray-500">Completed exams</p>
               </div>
             </div>
           </div>
@@ -362,6 +403,7 @@ const DashboardPage = () => {
               <div className="ml-4">
                 <h2 className="text-lg font-semibold text-gray-900">Not Started</h2>
                 <p className="text-3xl font-bold text-red-600">{notStartedCount}</p>
+                <p className="text-sm text-gray-500">Yet to begin</p>
               </div>
             </div>
           </div>
@@ -376,8 +418,15 @@ const DashboardPage = () => {
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Submitted Responses</h2>
-                <p className="text-sm text-gray-600">Manage and download student responses</p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Student Responses {currentUserRoom && `- Room ${currentUserRoom}`}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {currentUserRoom 
+                    ? `Manage responses for students in Room ${currentUserRoom}`
+                    : "Manage and download student responses"
+                  }
+                </p>
               </div>
             </div>
             
@@ -392,7 +441,7 @@ const DashboardPage = () => {
                 }`}
               >
                 <Download className="w-4 h-4" />
-                <span>Download All</span>
+                <span>Download All ({submittedCount})</span>
               </button>
               
               <button
@@ -412,7 +461,7 @@ const DashboardPage = () => {
                 ) : (
                   <>
                     <Printer className="w-4 h-4" />
-                    <span>Print All Responses</span>
+                    <span>Print All Responses ({submittedCount})</span>
                   </>
                 )}
               </button>
@@ -452,9 +501,7 @@ const DashboardPage = () => {
                           </div>
                           <div className="ml-3">
                             <div className="text-sm font-medium text-gray-900">{data.name}</div>
-                            {data.examroom && (
-                              <div className="text-sm text-gray-500">Room: {data.examroom}</div>
-                            )}
+                            <div className="text-sm text-gray-500">Room: {data.examroom}</div>
                           </div>
                         </div>
                       </td>
@@ -489,8 +536,13 @@ const DashboardPage = () => {
             {submittedData.length === 0 && (
               <div className="text-center py-12">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No data available</h3>
-                <p className="text-gray-500">No student records found.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No students found</h3>
+                <p className="text-gray-500">
+                  {currentUserRoom 
+                    ? `No students found in Room ${currentUserRoom}.`
+                    : "No student records found for your assigned room."
+                  }
+                </p>
               </div>
             )}
           </div>
@@ -522,6 +574,7 @@ const DashboardPage = () => {
                 
                 <p className="text-gray-600 mb-6">
                   Processing {printProgress.current} of {printProgress.total} responses
+                  {currentUserRoom && ` for Room ${currentUserRoom}`}
                 </p>
 
                 {currentPrintItem && (

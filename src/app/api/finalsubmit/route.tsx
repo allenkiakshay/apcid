@@ -12,14 +12,14 @@ const prisma = new PrismaClient();
 function getLocalIPAddress() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
-    for (const networkInterface of interfaces[name]) {
+    for (const networkInterface of interfaces[name] ?? []) {
       // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-      if (networkInterface.family === 'IPv4' && !networkInterface.internal) {
+      if (networkInterface.family === "IPv4" && !networkInterface.internal) {
         return networkInterface.address;
       }
     }
   }
-  return 'localhost';
+  return "localhost";
 }
 
 export async function saveFile(
@@ -146,6 +146,17 @@ export async function GET(req: Request) {
     const pdfFiles = [excelpdfpath, wordpdfpath, pptpdfpath, textpdfpath];
     const originalFileNames = oFiles.map((filePath) => path.basename(filePath));
 
+    // Add timestamp at bottom right
+    const currentTime = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
     for (const [index, pdfFile] of pdfFiles.entries()) {
       const pdfBytes = fs.readFileSync(pdfFile);
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -156,24 +167,18 @@ export async function GET(req: Request) {
 
       for (const page of copiedPages) {
         // Add user details to each original document page
-        page.drawText(`IP: ${localIP} | Name: ${fetched_user.name || 'N/A'} | Hall Ticket: ${fetched_user.hallticket}`, {
-          x: 50,
-          y: page.getHeight() - 20,
-          size: 8,
-          color: rgb(0.3, 0.3, 0.3), // Gray color
-        });
+        page.drawText(
+          `IP: ${localIP} | Name: ${
+            fetched_user.name || "N/A"
+          } | Hall Ticket: ${fetched_user.hallticket}`,
+          {
+            x: 50,
+            y: page.getHeight() - 20,
+            size: 8,
+            color: rgb(0.3, 0.3, 0.3), // Gray color
+          }
+        );
 
-        // Add timestamp at bottom right
-        const currentTime = new Date().toLocaleString('en-IN', { 
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        
         const timestampText = `Generated: ${currentTime}`;
         page.drawText(timestampText, {
           x: page.getWidth() - 200,
@@ -183,121 +188,122 @@ export async function GET(req: Request) {
         });
 
         mergedPdf.addPage(page);
+      }
 
-        // Add a new page with logos and details after each PDF page
-        const logoPage = mergedPdf.addPage();
+      // Add a new page with logos and details after each PDF page
+      const logoPage = mergedPdf.addPage();
 
-        const leftLogoPath = path.join(
-          process.cwd(),
-          "public",
-          "ap_police.png"
-        );
-        const rightLogoPath = path.join(process.cwd(), "public", "ap.png");
+      const leftLogoPath = path.join(process.cwd(), "public", "ap_police.png");
+      const rightLogoPath = path.join(process.cwd(), "public", "ap.png");
 
-        if (!fs.existsSync(leftLogoPath)) {
-          throw new Error(`Left logo file not found: ${leftLogoPath}`);
-        }
+      if (!fs.existsSync(leftLogoPath)) {
+        throw new Error(`Left logo file not found: ${leftLogoPath}`);
+      }
 
-        if (!fs.existsSync(rightLogoPath)) {
-          throw new Error(`Right logo file not found: ${rightLogoPath}`);
-        }
+      if (!fs.existsSync(rightLogoPath)) {
+        throw new Error(`Right logo file not found: ${rightLogoPath}`);
+      }
 
-        const leftLogoBytes = fs.readFileSync(leftLogoPath);
-        const rightLogoBytes = fs.readFileSync(rightLogoPath);
+      const leftLogoBytes = fs.readFileSync(leftLogoPath);
+      const rightLogoBytes = fs.readFileSync(rightLogoPath);
 
-        const leftLogoImage = await mergedPdf.embedPng(leftLogoBytes);
-        const rightLogoImage = await mergedPdf.embedPng(rightLogoBytes);
+      const leftLogoImage = await mergedPdf.embedPng(leftLogoBytes);
+      const rightLogoImage = await mergedPdf.embedPng(rightLogoBytes);
 
-        const leftLogoWidth = 50; // Fixed width for left logo
-        const leftLogoHeight = 50; // Fixed height for left logo
-        const rightLogoWidth = 50; // Fixed width for right logo
-        const rightLogoHeight = 50; // Fixed height for right logo
+      const leftLogoWidth = 50; // Fixed width for left logo
+      const leftLogoHeight = 50; // Fixed height for left logo
+      const rightLogoWidth = 50; // Fixed width for right logo
+      const rightLogoHeight = 50; // Fixed height for right logo
 
-        const leftLogoXOffset = 50; // Distance from the left
-        const leftLogoYOffset = logoPage.getHeight() - leftLogoHeight - 20; // Distance from the top
+      const leftLogoXOffset = 50; // Distance from the left
+      const leftLogoYOffset = logoPage.getHeight() - leftLogoHeight - 20; // Distance from the top
 
-        const rightLogoXOffset = logoPage.getWidth() - rightLogoWidth - 50; // Distance from the right
-        const rightLogoYOffset = logoPage.getHeight() - rightLogoHeight - 20; // Distance from the top
+      const rightLogoXOffset = logoPage.getWidth() - rightLogoWidth - 50; // Distance from the right
+      const rightLogoYOffset = logoPage.getHeight() - rightLogoHeight - 20; // Distance from the top
 
-        // Draw the left logo
-        logoPage.drawImage(leftLogoImage, {
-          x: leftLogoXOffset,
-          y: leftLogoYOffset,
-          width: leftLogoWidth,
-          height: leftLogoHeight,
-        });
+      // Draw the left logo
+      logoPage.drawImage(leftLogoImage, {
+        x: leftLogoXOffset,
+        y: leftLogoYOffset,
+        width: leftLogoWidth,
+        height: leftLogoHeight,
+      });
 
-        // Draw the right logo
-        logoPage.drawImage(rightLogoImage, {
-          x: rightLogoXOffset,
-          y: rightLogoYOffset,
-          width: rightLogoWidth,
-          height: rightLogoHeight,
-        });
+      // Draw the right logo
+      logoPage.drawImage(rightLogoImage, {
+        x: rightLogoXOffset,
+        y: rightLogoYOffset,
+        width: rightLogoWidth,
+        height: rightLogoHeight,
+      });
 
-        const yOffset = 50; // Distance from the bottom
-        const xOffset = 50; // Distance from the left
+      const yOffset = 50; // Distance from the bottom
+      const xOffset = 50; // Distance from the left
 
-        // Add a page heading
-        const headingYOffset = logoPage.getHeight() - 150; // Position below the logos
-        logoPage.drawText("Submission Report", {
-          x: xOffset,
-          y: headingYOffset,
-          size: 28,
-          color: rgb(0, 0, 0),
-        });
+      // Add a page heading
+      const headingYOffset = logoPage.getHeight() - 150; // Position below the logos
+      logoPage.drawText("Submission Report", {
+        x: xOffset,
+        y: headingYOffset,
+        size: 28,
+        color: rgb(0, 0, 0),
+      });
 
-        // Add user details section
-        logoPage.drawText(`Submitted by: ${fetched_user.name || 'N/A'}`, {
-          x: xOffset,
-          y: headingYOffset - 50,
-          size: 12,
-          color: rgb(0, 0, 0),
-        });
-        logoPage.drawText(`Hall Ticket: ${fetched_user.hallticket}`, {
-          x: xOffset,
-          y: headingYOffset - 70,
-          size: 12,
-          color: rgb(0, 0, 0),
-        });
-        logoPage.drawText(`IP Address: ${localIP}`, {
-          x: xOffset,
-          y: headingYOffset - 90,
-          size: 12,
-          color: rgb(0, 0, 0),
-        });
-        logoPage.drawText(`Submission Time: ${currentTime}`, {
-          x: xOffset,
-          y: headingYOffset - 110,
-          size: 10,
-          color: rgb(0, 0, 0),
-        });
+      // Add user details section
+      logoPage.drawText(`Submitted by: ${fetched_user.name || "N/A"}`, {
+        x: xOffset,
+        y: headingYOffset - 50,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      logoPage.drawText(`Hall Ticket: ${fetched_user.hallticket}`, {
+        x: xOffset,
+        y: headingYOffset - 70,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      logoPage.drawText(`IP Address: ${localIP}`, {
+        x: xOffset,
+        y: headingYOffset - 90,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      logoPage.drawText(`Submission Time: ${currentTime}`, {
+        x: xOffset,
+        y: headingYOffset - 110,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
 
-        // Add original file name and PDF file name
-        const originalFileName = originalFileNames[index];
-        const pdfFileName = path.basename(pdfFile);
+      // Add original file name and PDF file name
+      const originalFileName = originalFileNames[index];
+      const pdfFileName = path.basename(pdfFile);
 
-        logoPage.drawText(`Original File: ${originalFileName}`, {
-          x: xOffset,
-          y: headingYOffset - 140,
-          size: 10,
-          color: rgb(0, 0, 0),
-        });
-        logoPage.drawText(`PDF File: ${pdfFileName}`, {
-          x: xOffset,
-          y: headingYOffset - 160,
-          size: 10,
-          color: rgb(0, 0, 0),
-        });
+      logoPage.drawText(`Original File: ${originalFileName}`, {
+        x: xOffset,
+        y: headingYOffset - 140,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
+      logoPage.drawText(`PDF File: ${pdfFileName}`, {
+        x: xOffset,
+        y: headingYOffset - 160,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
 
-        // Add watermark-style user info at bottom
-        logoPage.drawText(`IP: ${localIP} | ${fetched_user.name || 'N/A'} | ${fetched_user.hallticket}`, {
+      // Add watermark-style user info at bottom
+      logoPage.drawText(
+        `IP: ${localIP} | ${fetched_user.name || "N/A"} | ${
+          fetched_user.hallticket
+        }`,
+        {
           x: xOffset,
           y: 30,
           size: 8,
           color: rgb(0.3, 0.3, 0.3),
-        });
-      }
+        }
+      );
     }
 
     const mergedPdfBytes = await mergedPdf.save();

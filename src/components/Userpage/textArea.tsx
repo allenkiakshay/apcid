@@ -10,6 +10,13 @@ interface TextAreaProps {
   setSubmitStatus: Dispatch<SetStateAction<boolean>>;
 }
 
+interface TimerState {
+  startTime: number;
+  timeRemaining: number;
+  timerStarted: boolean;
+  sessionText: string;
+}
+
 export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus }) => {
   const [text, setText] = useState<string>("");
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -25,10 +32,102 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textRef = useRef<string>(""); // Add ref to track current text value
 
+  // localStorage keys
+  const TIMER_STATE_KEY = "typing_timer_state";
+  const SESSION_ID_KEY = "typing_session_id";
+
   // Update ref whenever text changes
   useEffect(() => {
     textRef.current = text;
   }, [text]);
+
+  // Save timer state to localStorage
+  const saveTimerState = (state: TimerState) => {
+    try {
+      localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.error("Failed to save timer state:", error);
+    }
+  };
+
+  // Load timer state from localStorage
+  const loadTimerState = (): TimerState | null => {
+    try {
+      const savedState = localStorage.getItem(TIMER_STATE_KEY);
+      if (savedState) {
+        return JSON.parse(savedState);
+      }
+    } catch (error) {
+      console.error("Failed to load timer state:", error);
+    }
+    return null;
+  };
+
+  // Clear timer state from localStorage
+  const clearTimerState = () => {
+    try {
+      localStorage.removeItem(TIMER_STATE_KEY);
+      localStorage.removeItem(SESSION_ID_KEY);
+    } catch (error) {
+      console.error("Failed to clear timer state:", error);
+    }
+  };
+
+  // Generate unique session ID
+  const generateSessionId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  };
+
+  // Initialize component with saved state
+  useEffect(() => {
+    const savedState = loadTimerState();
+    if (savedState) {
+      const now = Date.now();
+      const elapsedSinceStart = Math.floor((now - savedState.startTime) / 1000);
+      const newTimeRemaining = Math.max(0, savedState.timeRemaining - elapsedSinceStart);
+      
+      if (newTimeRemaining > 0) {
+        // Restore state
+        setText(savedState.sessionText);
+        setStartTime(savedState.startTime);
+        setTimeRemaining(newTimeRemaining);
+        setTimerStarted(savedState.timerStarted);
+        
+        // Calculate typing speed based on saved data
+        if (savedState.sessionText.trim()) {
+          const totalElapsedTime = (now - savedState.startTime) / 1000;
+          const wordsTyped = savedState.sessionText
+            .split(" ")
+            .filter((word) => word.length > 0).length;
+          setTypingSpeed(wordsTyped > 0 ? (wordsTyped / totalElapsedTime) * 60 : 1);
+        }
+        
+        if (savedState.timerStarted) {
+          // Restart timers with remaining time
+          startAutoSubmitTimerWithTime(newTimeRemaining);
+        }
+      } else if (savedState.timerStarted) {
+        // Timer expired while page was closed, auto-submit
+        setText(savedState.sessionText);
+        setTimeout(() => {
+          handleAutoSubmit();
+        }, 100);
+      }
+    }
+  }, []);
+
+  // Save state whenever timer state changes
+  useEffect(() => {
+    if (timerStarted && startTime) {
+      const state: TimerState = {
+        startTime,
+        timeRemaining,
+        timerStarted,
+        sessionText: text
+      };
+      saveTimerState(state);
+    }
+  }, [timerStarted, startTime, timeRemaining, text]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -65,6 +164,29 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
     }, 5 * 60 * 1000); // 5 minutes
   };
 
+  // Start auto-submit timer with custom time (for restored sessions)
+  const startAutoSubmitTimerWithTime = (remainingTime: number) => {
+    // Clear any existing timers
+    clearAutoSubmitTimers();
+    setTimerStarted(true);
+
+    // Start countdown timer (updates every second)
+    countdownTimerRef.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownTimerRef.current!);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Auto-submit after remaining time
+    autoSubmitTimerRef.current = setTimeout(() => {
+      handleAutoSubmit();
+    }, remainingTime * 1000);
+  };
+
   // Clear all timers
   const clearAutoSubmitTimers = () => {
     if (autoSubmitTimerRef.current) {
@@ -78,7 +200,7 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
     setTimerStarted(false);
   };
 
-  // Handle auto-submit
+  // Handle auto-submit - unified with manual submit logic
   const handleAutoSubmit = async (): Promise<void> => {
     const currentText = textRef.current; // Use ref value instead of state
     
@@ -86,33 +208,21 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
       setMessage("Time limit reached - No text to submit.");
       clearAutoSubmitTimers();
       setTimeRemaining(300); // Reset for next session
+      clearTimerState(); // Clear localStorage
       return;
     }
 
-    setMessage("Auto-submitting due to time limit...");
-    await handleSubmit(true); // Pass true to indicate auto-submit
-  };
-
-  // Reset timer when text changes
-  const resetTimer = () => {
-    setTimeRemaining(300); // Reset to 5 minutes
-    setTimerStarted(false);
-    clearAutoSubmitTimers();
-  };
-
-  // Clean up timers on component unmount
-  useEffect(() => {
-    return () => {
-      clearAutoSubmitTimers();
-    };
-  }, []);
-
-  const handleSubmit = async (isAutoSubmit: boolean = false): Promise<void> => {
-    if (!session) return;
+    // Set submitting state and clear timers
     setSubmitting(true);
-
-    // Clear timers since we're submitting
     clearAutoSubmitTimers();
+
+    // Use the same submission logic as manual submit
+    await performSubmission(currentText, true);
+  };
+
+  // Unified submission logic
+  const performSubmission = async (textToSubmit: string, isAutoSubmit: boolean = false): Promise<void> => {
+    if (!session) return;
 
     const token = generateToken(
       {
@@ -121,9 +231,7 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
       60 * 2 // Token valid for 2 minutes
     );
 
-    const currentText = isAutoSubmit ? textRef.current : text; // Use ref for auto-submit
-
-    if (!currentText.trim()) {
+    if (!textToSubmit.trim()) {
       const message = isAutoSubmit 
         ? "Time limit reached - No text to submit."
         : "Please enter some text before submitting.";
@@ -134,12 +242,28 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
         // Reset timer for next session after auto-submit with no text
         setTimeRemaining(300);
         setTimerStarted(false);
+        clearTimerState(); // Clear localStorage
       }
       return;
     }
 
     try {
-      const textBlob = new Blob(["\n\n\n\n\n\n" + currentText], {
+      // Calculate final typing speed if not available or if auto-submitting
+      let finalTypingSpeed = typingSpeed;
+      if (!finalTypingSpeed || finalTypingSpeed <= 0) {
+        if (startTime && textToSubmit.trim()) {
+          const elapsedTime = (Date.now() - startTime) / 1000;
+          const wordsTyped = textToSubmit
+            .split(" ")
+            .filter((word) => word.length > 0).length;
+          finalTypingSpeed = wordsTyped > 0 ? (wordsTyped / elapsedTime) * 60 : 1;
+        } else {
+          // Fallback to minimum typing speed of 1 WPM if calculation fails
+          finalTypingSpeed = 1;
+        }
+      }
+
+      const textBlob = new Blob(["\n\n\n\n\n\n" + textToSubmit], {
         type: "text/plain",
       });
 
@@ -149,7 +273,7 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
 
       const formData = new FormData();
       formData.append("textfile", textFile);
-      formData.append("typingspeed", typingSpeed?.toString() || "");
+      formData.append("typingspeed", finalTypingSpeed.toString());
 
       const response = await fetch("/api/submit/text", {
         method: "POST",
@@ -172,6 +296,10 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
       setText(""); // Clear the text area after successful submission
       setTimeRemaining(300); // Reset timer
       setTimerStarted(false); // Reset timer state for next session
+      
+      // Clear localStorage after successful submission
+      clearTimerState();
+      
     } catch (error: any) {
       console.error("Error submitting text:", error);
       setMessage(`Error: ${error.message}`);
@@ -180,6 +308,31 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
       setShowConfirmation(false);
     }
   };
+
+  // Manual submit handler
+  const handleSubmit = async (isAutoSubmit: boolean = false): Promise<void> => {
+    // Clear timers since we're submitting
+    clearAutoSubmitTimers();
+    setSubmitting(true);
+
+    const currentText = isAutoSubmit ? textRef.current : text; // Use ref for auto-submit
+    await performSubmission(currentText, isAutoSubmit);
+  };
+
+  // Reset timer when text changes
+  const resetTimer = () => {
+    setTimeRemaining(300); // Reset to 5 minutes
+    setTimerStarted(false);
+    clearAutoSubmitTimers();
+    clearTimerState(); // Clear localStorage
+  };
+
+  // Clean up timers on component unmount
+  useEffect(() => {
+    return () => {
+      clearAutoSubmitTimers();
+    };
+  }, []);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const currentText = e.target.value;
@@ -242,11 +395,15 @@ export const TextArea: React.FC<TextAreaProps> = ({ setMessage, setSubmitStatus 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
       {/* Header */}
+
+      <div className=" py-2 bg-gray-100 rounded-2xl shadow-lg my-5">
+        <h2 className="text-2xl font-semibold text-gray-800 text-center">Section 1</h2>
+      </div>
       
        <div className="mb-4 bg-gray-50 border border-gray-200 p-4 rounded-xl shadow-inner">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">Sample Text</h3>
         <p className="text-sm text-gray-600 leading-relaxed">
-          The quick brown fox jumps over the lazy dog. This is a sample sentence to help you get started. Feel free to ignore it and write your own.
+          Amidst the hum of old ceiling fans and the quiet rustle of worn-out notebooks, Ayaan typed fiercely—five minutes, one paragraph, no backspace. His fingers hesitated not from fear, but from the weight of precision each letter demanded. Somewhere outside, a dog barked twice, unsettling his rhythm like a sudden comma in a well-paced sentence. He recalled his teacher&apos;s warning: “Speed without accuracy is noise.” The exam room wasn&apos;t silent; it was loud with tension, heavy with the scent of stale ink and determination. His thoughts tried to outrun the clock, yet he stayed grounded—comma by clause, period by pause. Somewhere in the corner, someone had already stopped typing. Had they finished, or given up? The wall clock ticked louder now, like a heartbeat synced to stress. Every word was a step closer to clarity, or chaos. Five minutes felt like a lifetime dressed in keystrokes. He knew—this wasn&apos;t just a test of typing. It was a test of focus, endurance, and the subtle art of letting thoughts flow faster than doubt
         </p>
       </div>
 

@@ -188,23 +188,45 @@ export const FormSubmit = ({
     return files && files.length > 0 ? files[files.length - 1] : null;
   };
 
+  // Helper function to check if at least one file is uploaded
+  const hasAnyFileUploaded = () => {
+    return (
+      (submittedData?.excel?.length > 0) ||
+      (submittedData?.word?.length > 0) ||
+      (submittedData?.ppt?.length > 0)
+    );
+  };
+
+  // Helper function to get uploaded files count
+  const getUploadedFilesCount = () => {
+    let count = 0;
+    if (submittedData?.excel?.length > 0) count++;
+    if (submittedData?.word?.length > 0) count++;
+    if (submittedData?.ppt?.length > 0) count++;
+    return count;
+  };
+
   return (
     <div className="flex-1 p-5">
       {submitstatus ? (
         <form onSubmit={handleSubmit} className="mb-5 pb-10">
+          <div className=" py-2 bg-gray-100 rounded-2xl shadow-lg my-5">
+            <h2 className="text-2xl font-semibold text-gray-800 text-center">Section 2</h2>
+          </div>
           <h3 className="text-lg font-semibold mb-3">Upload Files</h3>
+          <p className="text-sm text-gray-600 mb-4">You can upload any combination of files. All files are optional.</p>
           <div className="space-y-3">
             <ExcelFile setMessage={setMessage} />
             <WordFile setMessage={setMessage} />
             <PPTFile setMessage={setMessage} />
           </div>
-          {/* Bottom part: Typing speed calculator */}
+          {/* Bottom part: Submit button */}
           <div className="flex justify-end mt-5">
             <button
               type="submit"
               className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-green-500 transition-colors"
             >
-              {loading ? "Submitting..." : "Submit All Files"}
+              {loading ? "Submitting..." : "Submit Saved Files"}
             </button>
           </div>
         </form>
@@ -232,8 +254,12 @@ export const FormSubmit = ({
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">Uploaded Files</h3>
-                  <p className="text-blue-100 text-sm">Review your latest uploads</p>
+                  <h3 className="text-xl font-bold">Submission Review</h3>
+                  <p className="text-blue-100 text-sm">
+                    {hasAnyFileUploaded() 
+                      ? `${getUploadedFilesCount()} of 3 files uploaded` 
+                      : "No files uploaded"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -261,15 +287,21 @@ export const FormSubmit = ({
 
                           <div className="flex-grow min-w-0">
                             <div className="flex items-center space-x-2 mb-2">
-                              {hasFiles && (
+                              {hasFiles ? (
                                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
                               )}
                               <span className={`font-semibold ${hasFiles ? 'text-green-800' : 'text-gray-600'}`}>
                                 {getFileTypeName(key)}
                               </span>
-                              {hasFiles && (
+                              {hasFiles ? (
                                 <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
                                   ✓ Uploaded
+                                </span>
+                              ) : (
+                                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                  Optional
                                 </span>
                               )}
                             </div>
@@ -304,23 +336,11 @@ export const FormSubmit = ({
               {/* Submit Button */}
               <div className="mt-8 pt-4 border-t border-gray-200">
                 <button
-                  className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${!(
-                    submittedData?.excel?.length > 0 &&
-                    submittedData?.word?.length > 0 &&
-                    submittedData?.ppt?.length > 0
-                  )
-                    ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                    : loading
-                      ? 'bg-blue-400 cursor-wait'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-green-700 hover:to-green-700 focus:ring-blue-400 transform hover:scale-[1.02] active:scale-[0.98]'
+                  className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${loading
+                    ? 'bg-blue-400 cursor-wait'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-green-700 hover:to-green-700 focus:ring-blue-400 transform hover:scale-[1.02] active:scale-[0.98]'
                     }`}
-                  disabled={
-                    !(
-                      submittedData?.excel?.length > 0 &&
-                      submittedData?.word?.length > 0 &&
-                      submittedData?.ppt?.length > 0
-                    ) || loading
-                  }
+                  disabled={loading}
                   onClick={handleFinalSubmit}
                 >
                   <div className="flex items-center justify-center space-x-2">
@@ -338,15 +358,18 @@ export const FormSubmit = ({
                   </div>
                 </button>
 
-                {!(
-                  submittedData?.excel?.length > 0 &&
-                  submittedData?.word?.length > 0 &&
-                  submittedData?.ppt?.length > 0
-                ) && (
-                    <p className="text-center text-sm text-gray-500 mt-2">
-                      Please upload all required file types to continue
+                {/* Information text */}
+                <div className="mt-3 text-center">
+                  {hasAnyFileUploaded() ? (
+                    <p className="text-sm text-green-600">
+                      Ready to submit with {getUploadedFilesCount()} file{getUploadedFilesCount() !== 1 ? 's' : ''}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-blue-600">
+                      You can submit without uploading any files
                     </p>
                   )}
+                </div>
               </div>
             </div>
           </div>

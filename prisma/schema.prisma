@@ -58,7 +58,7 @@ model excelFile {
   userId    String
   oexcelurl String
   pexcelurl String
-  score     Float    @default(0.0) 
+  score     Float?    @default(0.0) 
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -68,7 +68,7 @@ model wordFile {
   userId    String
   owordurl  String
   pwordurl  String
-  score     Float    @default(0.0) 
+  score     Float?    @default(0.0) 
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -78,7 +78,7 @@ model pptFile {
   userId    String
   oppturl   String
   pppturl   String
-  score     Float    @default(0.0) 
+  score     Float?    @default(0.0) 
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -89,8 +89,8 @@ model textFile {
   otexturl    String
   ptexturl    String
   typingspeed Int
-  score       Float    @default(0.0) 
-  typingScore Float    @default(0.0) 
+  score       Float?    @default(0.0) 
+  typingScore Float?    @default(0.0) 
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
 }

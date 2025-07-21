@@ -105,19 +105,19 @@ export async function POST(request: Request) {
     formData.append("reference", ofileBlob, path.basename(ofilepath));
     formData.append("candidate", cfileBlob, path.basename(originalpath));
 
-    const response = await fetch("https://exam-management-system-2ed1.onrender.com/api/evaluate", {
-      method: "POST",
-      body: formData,
-    });
+    // const response = await fetch("https://exam-management-system-2ed1.onrender.com/api/evaluate", {
+    //   method: "POST",
+    //   body: formData,
+    // });
 
-    const responseData = await response.json();
+    // const responseData = await response.json();
 
-    if (!response.ok) {
-      return NextResponse.json(
-      { message: "Failed to upload file to external API" },
-      { status: 500 }
-      );
-    }
+    // if (!response.ok) {
+    //   return NextResponse.json(
+    //   { message: "Failed to upload file to external API" },
+    //   { status: 500 }
+    //   );
+    // }
 
     if (fielEntryExists) {
       await prisma.excelFile.create({
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
           userId: fetched_user.id,
           oexcelurl: originalpath,
           pexcelurl: pdfpath,
-          score: responseData.report.total
+          // score: responseData.report.total
         },
       });
       return NextResponse.json(
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         userId: fetched_user.id,
         oexcelurl: originalpath,
         pexcelurl: pdfpath,
-        score: responseData.report.total
+        // score: responseData.report.total
       },
     });
 

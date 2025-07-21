@@ -106,22 +106,22 @@ export async function POST(request: Request) {
     formData.append("reference_text", referenceText);
     formData.append("typing_speed", typingSpeed);
 
-    const response = await fetch(
-      "https://exam-management-system-2ed1.onrender.com/api/evaluate",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    // const response = await fetch(
+    //   "https://exam-management-system-2ed1.onrender.com/api/evaluate",
+    //   {
+    //     method: "POST",
+    //     body: formData,
+    //   }
+    // );
 
-    const responseData = await response.json();
+    // const responseData = await response.json();
     
-    if (!response.ok) {
-      return NextResponse.json(
-        { message: "Failed to upload file to external API" },
-        { status: 500 }
-      );
-    }
+    // if (!response.ok) {
+    //   return NextResponse.json(
+    //     { message: "Failed to upload file to external API" },
+    //     { status: 500 }
+    //   );
+    // }
 
     await prisma.textFile.create({
       data: {
@@ -129,8 +129,8 @@ export async function POST(request: Request) {
         otexturl: originalpath,
         ptexturl: pdfpath,
         typingspeed: Number(typingSpeed),
-        score: responseData.report.total,
-        typingScore: responseData.report.typing_speed.score,
+        // score: responseData.report.total,
+        // typingScore: responseData.report.typing_speed.score,
       },
     });
 

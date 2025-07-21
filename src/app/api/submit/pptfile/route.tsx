@@ -97,22 +97,22 @@ export async function POST(request: Request) {
     formData.append("candidate", ofileBlob, path.basename(ofilepath));
     formData.append("reference", cfileBlob, path.basename(originalpath));
 
-    const response = await fetch(
-      "https://exam-management-system-2ed1.onrender.com/api/evaluate",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    // const response = await fetch(
+    //   "https://exam-management-system-2ed1.onrender.com/api/evaluate",
+    //   {
+    //     method: "POST",
+    //     body: formData,
+    //   }
+    // );
 
-    const responseData = await response.json();
+    // const responseData = await response.json();
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { message: "Failed to upload file to external API" },
-        { status: 500 }
-      );
-    }
+    // if (!response.ok) {
+    //   return NextResponse.json(
+    //     { message: "Failed to upload file to external API" },
+    //     { status: 500 }
+    //   );
+    // }
 
     const fielEntryExists = await prisma.pptFile.findFirst({
       where: { userId: fetched_user.id },
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
           userId: fetched_user.id,
           oppturl: originalpath,
           pppturl: pdfpath,
-          score: responseData.report.total
+          // score: responseData.report.total
         },
       });
       return NextResponse.json(
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         userId: fetched_user.id,
         oppturl: originalpath,
         pppturl: pdfpath,
-        score: responseData.report.total
+        // score: responseData.report.total
       },
     });
 

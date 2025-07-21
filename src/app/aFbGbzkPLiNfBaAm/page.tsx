@@ -367,7 +367,8 @@ const DashboardPage = () => {
               >
                 <option value="" disabled>Select Exam Slot</option>
                 <option value="FN">FN</option>
-                <option value="AN">AN</option>
+                <option value="AN">AN</option>                
+                <option value="EN">EN</option>
               </select>
               <select
                 className="w-full p-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300 bg-white"
@@ -378,6 +379,7 @@ const DashboardPage = () => {
                 <option value="2025-07-18">2025-07-18</option>
                 <option value="2025-07-19">2025-07-19</option>
                 <option value="2025-07-20">2025-07-20</option>
+                <option value="2025-07-21">2025-07-21</option>
               </select>
               <input
                 onChange={(e) => setOtp(e.target.value)}
@@ -425,6 +427,7 @@ const DashboardPage = () => {
               <option value="2025-07-18">2025-07-18</option>
               <option value="2025-07-19">2025-07-19</option>
               <option value="2025-07-20">2025-07-20</option>
+              <option value="2025-07-21">2025-07-21</option>
             </select>
             <input
               onChange={(e) => setOtp(e.target.value)}

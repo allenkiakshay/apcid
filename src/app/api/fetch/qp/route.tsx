@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
     }
 
     const decoded = extractDataFromToken(token);
-
-    if (!decoded || typeof decoded !== "object" || !("user" in decoded)) {
+    // console.log(decoded);
+    
+    if (!decoded || !("user" in decoded)) {
       return NextResponse.json({ error: "Invalid token" }, { status: 403 });
     }
 
@@ -29,19 +30,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+      const formatDateToYYYYMMDD = (dateStr: string): string => {
+        const [dd, mm, yyyy] = dateStr.split("-");
+        return `${yyyy}-${mm}-${dd}`;
+      };
+
     const qp = await prisma.questionPaper.findFirst({
       where: {
         examslot: dbUser.examslot,
-        examdate: dbUser.examdate,
+        examdate: formatDateToYYYYMMDD(dbUser.examdate),
         display: true,
       },
     });
 
     if (!qp || !qp.fileUrl) {
-      return NextResponse.json(
-        { error: "Question paper not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Question paper not found" }, { status: 404 });
     }
 
     const filePath = qp.fileUrl;
@@ -61,10 +64,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching question paper:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
